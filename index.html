@@ -2387,7 +2387,12 @@
         }
 
         // Loose Item Functions
+        let isLooseItemSubmitting = false;
+
         function submitLooseItem() {
+            // Prevent duplicate submissions
+            if (isLooseItemSubmitting) return;
+
             const brand = document.getElementById('looseProductBrand').value.trim();
             const description = document.getElementById('looseProductDescription').value.trim();
 
@@ -2395,6 +2400,8 @@
                 alert('⚠️ Please fill in all fields');
                 return;
             }
+
+            isLooseItemSubmitting = true;
 
             const submissionData = {
                 action: 'saveNonQuinceProduct',
@@ -2420,6 +2427,9 @@
                 .catch(error => {
                     console.error('Error:', error);
                     showErrorToast('Error recording loose item');
+                })
+                .finally(() => {
+                    isLooseItemSubmitting = false;
                 });
         }
 
