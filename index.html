@@ -766,6 +766,12 @@
                     <button class="btn-primary" onclick="submitLooseItem()">✓ Record Loose Item</button>
                     <button class="btn-secondary" onclick="clearLooseItem()">Clear</button>
                 </div>
+
+                <!-- Inline Confirmation Message -->
+                <div id="looseItemConfirmation" style="display: none; margin-top: 20px; padding: 16px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724;">
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">✓ Loose Item Recorded Successfully!</div>
+                    <div style="font-size: 14px;">Assigned Bin #: <span id="confirmationBinNumber" style="font-weight: 600; font-size: 16px; color: #0c5460;"></span></div>
+                </div>
             </div>
 
             <!-- SHIP MODE SECTION -->
@@ -998,7 +1004,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDvpmmCQz017NY02uufMYOO-AouBzV23HmByt0cycsrsW3Lu9kb0bi3NuXJ_aeurP8/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeT7CfZ3mGgukmCUPMSpPnkxNqjaekv9nNVoAFFQTvOmbidA4fsT8kI8_TMo65DWrG/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2403,6 +2409,9 @@
 
             isLooseItemSubmitting = true;
 
+            // Hide any previous confirmation message
+            document.getElementById('looseItemConfirmation').style.display = 'none';
+
             const submissionData = {
                 action: 'saveNonQuinceProduct',
                 type: 'Loose Item',
@@ -2418,17 +2427,33 @@
                 .then(response => {
                     console.log('Response:', response);
 
-                    // Data is saved, now show the Bin#
+                    // Data is saved, now show the Bin# inline
                     const binNumber = response && response.binNumber ? response.binNumber : 'Check spreadsheet';
-                    alert('✓ Loose Item Recorded Successfully!\n\nAssigned Bin #: ' + binNumber);
+
+                    // Display confirmation message
+                    document.getElementById('confirmationBinNumber').textContent = binNumber;
+                    document.getElementById('looseItemConfirmation').style.display = 'block';
 
                     // Clear form after showing Bin#
                     clearLooseItem();
+
+                    // Auto-hide confirmation after 8 seconds
+                    setTimeout(() => {
+                        document.getElementById('looseItemConfirmation').style.display = 'none';
+                    }, 8000);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('✓ Loose Item Recorded Successfully!\n\nCheck spreadsheet for Bin #');
+
+                    // Display confirmation even on error
+                    document.getElementById('confirmationBinNumber').textContent = 'Check spreadsheet';
+                    document.getElementById('looseItemConfirmation').style.display = 'block';
                     clearLooseItem();
+
+                    // Auto-hide confirmation after 8 seconds
+                    setTimeout(() => {
+                        document.getElementById('looseItemConfirmation').style.display = 'none';
+                    }, 8000);
                 })
                 .finally(() => {
                     isLooseItemSubmitting = false;
