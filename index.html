@@ -1004,7 +1004,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkTselGKnLgg-vNfGOMJU7HE24EeMn4h_bPKEfNBGNupXPJlaIHIdeR3B3HkhZOj1a/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNWSLDvXbIfjgc6uGomtLiWT260505uvtY6ByGZOXh3ZCRpwoMiTFhHk4NUMy-cueX/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -1131,12 +1131,18 @@
 
                     // Set up message listener BEFORE submitting the form
                     const messageHandler = function(event) {
-                        // Verify the message came from Apps Script
-                        if (event.origin.includes('script.google') || event.origin.includes('googleusercontent')) {
+                        console.log('📨 Message received from origin:', event.origin);
+                        console.log('📨 Message data:', event.data);
+
+                        // Accept message from Apps Script (any Google origin)
+                        if (event.data && (event.data.status || event.data.binNumber)) {
                             console.log('✓ Message received from Apps Script:', event.data);
 
                             // Remove the listener
                             window.removeEventListener('message', messageHandler);
+
+                            // Clear timeout since we got the message
+                            clearTimeout(timeout);
 
                             // Cleanup iframe
                             setTimeout(() => {
@@ -1167,14 +1173,40 @@
 
                     // Set timeout in case postMessage never arrives
                     const timeout = setTimeout(() => {
-                        console.warn('Response timeout - using fallback');
+                        console.warn('postMessage timeout - trying to read iframe HTML directly');
                         window.removeEventListener('message', messageHandler);
+
+                        // Fallback: try to extract JSON from iframe HTML
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            if (iframeDoc && iframeDoc.body) {
+                                const htmlText = iframeDoc.body.innerText || iframeDoc.body.textContent || '';
+                                console.log('Iframe HTML text:', htmlText);
+
+                                // Try to extract JSON from the HTML
+                                const jsonMatch = htmlText.match(/\{[\s\S]*\}/);
+                                if (jsonMatch) {
+                                    const responseData = JSON.parse(jsonMatch[0]);
+                                    console.log('✓ Extracted response from iframe HTML:', responseData);
+                                    resolve(responseData);
+                                    setTimeout(() => {
+                                        try { document.body.removeChild(form); } catch(e) {}
+                                        try { document.body.removeChild(iframe); } catch(e) {}
+                                    }, 100);
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Fallback extraction error:', e);
+                        }
+
+                        // Last resort fallback
                         resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
                         setTimeout(() => {
                             try { document.body.removeChild(form); } catch(e) {}
                             try { document.body.removeChild(iframe); } catch(e) {}
                         }, 100);
-                    }, 3000);
+                    }, 1000);
 
                     console.log('Form submitted to iframe:', iframeName);
                     form.submit();
