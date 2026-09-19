@@ -1004,7 +1004,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-ITdt7KP-LQh6GFJV4x8Je_ySdVPHSFswcTcMOD8C8CbhoCuZxsLJ33oBQMOJpANq/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkTselGKnLgg-vNfGOMJU7HE24EeMn4h_bPKEfNBGNupXPJlaIHIdeR3B3HkhZOj1a/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -1115,27 +1115,41 @@
                 });
             }
 
-            // Function to send data to Apps Script using form submission (bypasses CORS)
+            // Function to send data to Apps Script using postMessage for cross-origin communication
             window.sendDataToAppsScript = function(data) {
                 return new Promise((resolve, reject) => {
                     console.log('Sending to:', APPS_SCRIPT_URL);
                     console.log('Data:', data);
 
-                    // Submit data via fetch with no-cors to avoid CORS blocking
-                    // This bypasses CORS but we can't read response, so we'll use an alternative approach
-
-                    // Instead: Submit form to hidden iframe without navigating main page
-                    const iframeName = 'appsScriptFrame_' + Math.random().toString(36).substr(2, 9);
-
                     // Create hidden iframe
-                    let iframe = document.getElementById(iframeName);
-                    if (!iframe) {
-                        iframe = document.createElement('iframe');
-                        iframe.id = iframeName;
-                        iframe.name = iframeName;
-                        iframe.style.display = 'none';
-                        document.body.appendChild(iframe);
-                    }
+                    const iframeName = 'appsScriptFrame_' + Math.random().toString(36).substr(2, 9);
+                    const iframe = document.createElement('iframe');
+                    iframe.id = iframeName;
+                    iframe.name = iframeName;
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+
+                    // Set up message listener BEFORE submitting the form
+                    const messageHandler = function(event) {
+                        // Verify the message came from Apps Script
+                        if (event.origin.includes('script.google') || event.origin.includes('googleusercontent')) {
+                            console.log('✓ Message received from Apps Script:', event.data);
+
+                            // Remove the listener
+                            window.removeEventListener('message', messageHandler);
+
+                            // Cleanup iframe
+                            setTimeout(() => {
+                                try { document.body.removeChild(iframe); } catch(e) {}
+                                try { document.body.removeChild(form); } catch(e) {}
+                            }, 100);
+
+                            // Resolve with the response
+                            resolve(event.data);
+                        }
+                    };
+
+                    window.addEventListener('message', messageHandler);
 
                     // Create form targeting the iframe
                     const form = document.createElement('form');
@@ -1151,66 +1165,18 @@
 
                     document.body.appendChild(form);
 
-                    // Submit and handle response
-                    let responseReady = false;
-                    iframe.onload = function() {
-                        if (responseReady) return; // Prevent double-firing
-                        responseReady = true;
-
+                    // Set timeout in case postMessage never arrives
+                    const timeout = setTimeout(() => {
+                        console.warn('Response timeout - using fallback');
+                        window.removeEventListener('message', messageHandler);
+                        resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
                         setTimeout(() => {
-                            try {
-                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                                if (iframeDoc) {
-                                    // Try multiple ways to extract the response text
-                                    let responseText = '';
+                            try { document.body.removeChild(form); } catch(e) {}
+                            try { document.body.removeChild(iframe); } catch(e) {}
+                        }, 100);
+                    }, 3000);
 
-                                    // First, try reading body text
-                                    if (iframeDoc.body) {
-                                        responseText = iframeDoc.body.innerText || iframeDoc.body.textContent || '';
-                                    }
-
-                                    // If empty, try the whole document
-                                    if (!responseText) {
-                                        responseText = iframeDoc.documentElement.innerText || iframeDoc.documentElement.textContent || '';
-                                    }
-
-                                    // If still empty, try to get all text content
-                                    if (!responseText) {
-                                        responseText = iframeDoc.body ? iframeDoc.body.innerHTML : '';
-                                    }
-
-                                    responseText = responseText.trim();
-                                    console.log('Raw response from iframe:', responseText);
-
-                                    if (responseText) {
-                                        // Try to extract JSON from the response
-                                        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                                        if (jsonMatch) {
-                                            const responseData = JSON.parse(jsonMatch[0]);
-                                            console.log('Parsed response:', responseData);
-                                            resolve(responseData);
-                                        } else {
-                                            console.log('No JSON found in response');
-                                            resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
-                                        }
-                                    } else {
-                                        console.log('Response text is empty');
-                                        resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
-                                    }
-                                }
-                            } catch (e) {
-                                console.error('Response parse error:', e);
-                                resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
-                            } finally {
-                                // Cleanup
-                                setTimeout(() => {
-                                    try { document.body.removeChild(form); } catch(e) {}
-                                    try { document.body.removeChild(iframe); } catch(e) {}
-                                }, 100);
-                            }
-                        }, 200);
-                    };
-
+                    console.log('Form submitted to iframe:', iframeName);
                     form.submit();
                 });
             };
