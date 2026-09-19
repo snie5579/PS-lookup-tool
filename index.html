@@ -998,7 +998,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTCVhXwVpDAdD7LDx6vmaK3zsNJgPLYNcSunHOrh5SzE43C4Ap62Y0eCw2-jF3CgtM/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1sN4OmDe6LhpYuV2TYZq-_IiSDBsF3XJsw3QUH9JMmJGQAcwL9fbbIOkUjyxutwAM/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -1117,12 +1117,19 @@
 
                 return fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
-                    body: formData,
-                    mode: 'no-cors'
+                    body: formData
                 })
                 .then(response => {
-                    console.log('Data submitted successfully');
-                    return { status: 'success', message: 'Data submitted to spreadsheet' };
+                    console.log('Response status:', response.status);
+                    // Try to parse the response as JSON
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.log('Could not parse response as JSON:', text);
+                            return { status: 'success', message: 'Data submitted to spreadsheet' };
+                        }
+                    });
                 })
                 .catch(error => {
                     console.error('Error:', error);
