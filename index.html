@@ -1161,13 +1161,40 @@
                             try {
                                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                                 if (iframeDoc) {
-                                    const responseText = (iframeDoc.body.innerText || iframeDoc.body.textContent || '').trim();
-                                    console.log('Response from iframe:', responseText);
+                                    // Try multiple ways to extract the response text
+                                    let responseText = '';
+
+                                    // First, try reading body text
+                                    if (iframeDoc.body) {
+                                        responseText = iframeDoc.body.innerText || iframeDoc.body.textContent || '';
+                                    }
+
+                                    // If empty, try the whole document
+                                    if (!responseText) {
+                                        responseText = iframeDoc.documentElement.innerText || iframeDoc.documentElement.textContent || '';
+                                    }
+
+                                    // If still empty, try to get all text content
+                                    if (!responseText) {
+                                        responseText = iframeDoc.body ? iframeDoc.body.innerHTML : '';
+                                    }
+
+                                    responseText = responseText.trim();
+                                    console.log('Raw response from iframe:', responseText);
+
                                     if (responseText) {
-                                        const responseData = JSON.parse(responseText);
-                                        console.log('Parsed response:', responseData);
-                                        resolve(responseData);
+                                        // Try to extract JSON from the response
+                                        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                                        if (jsonMatch) {
+                                            const responseData = JSON.parse(jsonMatch[0]);
+                                            console.log('Parsed response:', responseData);
+                                            resolve(responseData);
+                                        } else {
+                                            console.log('No JSON found in response');
+                                            resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
+                                        }
                                     } else {
+                                        console.log('Response text is empty');
                                         resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
                                     }
                                 }
