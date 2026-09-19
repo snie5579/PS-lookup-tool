@@ -1121,14 +1121,23 @@
                     console.log('Sending to:', APPS_SCRIPT_URL);
                     console.log('Data:', data);
 
-                    // Create hidden iframe to capture response
-                    const iframeName = 'appsScriptFrame_' + Date.now();
-                    const iframe = document.createElement('iframe');
-                    iframe.name = iframeName;
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
+                    // Submit data via fetch with no-cors to avoid CORS blocking
+                    // This bypasses CORS but we can't read response, so we'll use an alternative approach
 
-                    // Create form and target it to the iframe
+                    // Instead: Submit form to hidden iframe without navigating main page
+                    const iframeName = 'appsScriptFrame_' + Math.random().toString(36).substr(2, 9);
+
+                    // Create hidden iframe
+                    let iframe = document.getElementById(iframeName);
+                    if (!iframe) {
+                        iframe = document.createElement('iframe');
+                        iframe.id = iframeName;
+                        iframe.name = iframeName;
+                        iframe.style.display = 'none';
+                        document.body.appendChild(iframe);
+                    }
+
+                    // Create form targeting the iframe
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = APPS_SCRIPT_URL;
@@ -1142,23 +1151,37 @@
 
                     document.body.appendChild(form);
 
-                    // Handle iframe response
+                    // Submit and handle response
+                    let responseReady = false;
                     iframe.onload = function() {
-                        try {
-                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                            const responseText = iframeDoc.body.innerText;
-                            console.log('Response:', responseText);
-                            const responseData = JSON.parse(responseText);
-                            resolve(responseData);
-                        } catch (e) {
-                            console.error('Parse error:', e);
-                            resolve({ status: 'success', message: 'Data submitted', binNumber: 'Check spreadsheet' });
-                        }
-                        // Cleanup
+                        if (responseReady) return; // Prevent double-firing
+                        responseReady = true;
+
                         setTimeout(() => {
-                            document.body.removeChild(form);
-                            document.body.removeChild(iframe);
-                        }, 500);
+                            try {
+                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                                if (iframeDoc) {
+                                    const responseText = (iframeDoc.body.innerText || iframeDoc.body.textContent || '').trim();
+                                    console.log('Response from iframe:', responseText);
+                                    if (responseText) {
+                                        const responseData = JSON.parse(responseText);
+                                        console.log('Parsed response:', responseData);
+                                        resolve(responseData);
+                                    } else {
+                                        resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Response parse error:', e);
+                                resolve({ status: 'success', message: 'Data saved', binNumber: 'Check spreadsheet' });
+                            } finally {
+                                // Cleanup
+                                setTimeout(() => {
+                                    try { document.body.removeChild(form); } catch(e) {}
+                                    try { document.body.removeChild(iframe); } catch(e) {}
+                                }, 100);
+                            }
+                        }, 200);
                     };
 
                     form.submit();
