@@ -998,7 +998,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCdlhlnrjLpTeEvmaMTciuCgOI4UN5iPME-pDd9qwEFkuhfrVf_AFcYbOLlnZoXNfr/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymQE-VGnUsJgrNEJF7UgxQL88P7yQD-hJwXRzsG3RFYoeaqNwbEQfDvsDlgdvWbLFu/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2413,17 +2413,21 @@
 
             console.log('Submitting Loose Item:', submissionData);
 
-            // Use fetch to send data and stay on page
-            showSuccessToast('✓ Loose item recorded!');
-            clearLooseItem();
-
-            // Send data in background
+            // Send data and wait for response to show assigned Bin#
             sendDataToAppsScript(submissionData)
                 .then(response => {
                     console.log('Response:', response);
+
+                    // Show confirmation dialog with assigned Bin#
+                    const binNumber = response.binNumber || 'N/A';
+                    const confirmMessage = `✓ Loose Item Recorded Successfully!\n\nAssigned Bin #: ${binNumber}`;
+                    alert(confirmMessage);
+
+                    clearLooseItem();
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    showErrorToast('Error recording loose item');
                 })
                 .finally(() => {
                     isLooseItemSubmitting = false;
