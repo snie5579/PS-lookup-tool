@@ -1005,7 +1005,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzp7jQlYTmlJLzE0BHlEcJ_6o9P0BDH0a7Ig4WUtopd33MptznmNmKEGMZfQXOzl1bZ/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxtHTJtsUCh7MmORwzG0IRhWbctodPdudNFSHLk4uI7cfWlI9ChPKmszWocHc0Baa0/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2389,6 +2389,8 @@
             // Use fetch to send data and stay on page
             sendDataToAppsScript(submissionData)
                 .then(response => {
+                    console.log('Response:', response);
+                    // Show success message with auto-generated Bin#
                     showSuccessToast('✓ Loose item recorded!');
                     clearLooseItem();
                 })
