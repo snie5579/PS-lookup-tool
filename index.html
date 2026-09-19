@@ -2414,19 +2414,16 @@
             console.log('Submitting Loose Item:', submissionData);
 
             // Use fetch to send data and stay on page
+            showSuccessToast('✓ Loose item recorded!');
+            clearLooseItem();
+
+            // Send data in background
             sendDataToAppsScript(submissionData)
                 .then(response => {
                     console.log('Response:', response);
-                    // Show success message with auto-generated Bin#
-                    const message = response.binNumber
-                        ? `✓ Loose item recorded! Assigned Bin: ${response.binNumber}`
-                        : '✓ Loose item recorded!';
-                    showSuccessToast(message);
-                    clearLooseItem();
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showErrorToast('Error recording loose item');
                 })
                 .finally(() => {
                     isLooseItemSubmitting = false;
