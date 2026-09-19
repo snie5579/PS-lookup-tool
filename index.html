@@ -1115,53 +1115,34 @@
                 });
             }
 
-            // Function to send data to Apps Script using form submission (bypasses CORS)
+            // Function to send data to Apps Script using fetch
             window.sendDataToAppsScript = function(data) {
                 return new Promise((resolve, reject) => {
-                    // Create iframe for response capture
-                    const iframeName = 'appsScriptFrame_' + Date.now();
-                    const iframe = document.createElement('iframe');
-                    iframe.name = iframeName;
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
+                    console.log('Sending to:', APPS_SCRIPT_URL);
+                    console.log('Data:', data);
 
-                    // Create form with iframe target
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = APPS_SCRIPT_URL;
-                    form.target = iframeName;
-
-                    const input = document.createElement('textarea');
-                    input.name = 'data';
-                    input.value = JSON.stringify(data);
-                    form.appendChild(input);
-
-                    document.body.appendChild(form);
-
-                    // Capture response from iframe
-                    let responseReceived = false;
-                    iframe.onload = function() {
-                        try {
-                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                            const responseText = iframeDoc.body.innerText;
-                            console.log('Response:', responseText);
-
-                            const responseData = JSON.parse(responseText);
-                            responseReceived = true;
-                            resolve(responseData);
-                        } catch (e) {
-                            console.error('Could not parse iframe response:', e);
-                            resolve({ status: 'success', message: 'Data submitted' });
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error('HTTP ' + response.status);
                         }
-                    };
-
-                    form.submit();
-
-                    // Cleanup after timeout
-                    setTimeout(() => {
-                        document.body.removeChild(form);
-                        document.body.removeChild(iframe);
-                    }, 2000);
+                        return response.json();
+                    })
+                    .then(responseData => {
+                        console.log('Response data:', responseData);
+                        resolve(responseData);
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        reject(error);
+                    });
                 });
             };
         });
