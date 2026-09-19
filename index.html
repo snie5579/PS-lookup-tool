@@ -1118,21 +1118,23 @@
 
             // Function to send data to Apps Script using form submission (bypasses CORS)
             window.sendDataToAppsScript = function(data) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = APPS_SCRIPT_URL;
-                form.style.display = 'none';
+                // Use fetch with form-encoded data (no page navigation)
+                const formData = new URLSearchParams();
+                formData.append('data', JSON.stringify(data));
 
-                const input = document.createElement('textarea');
-                input.name = 'data';
-                input.value = JSON.stringify(data);
-                form.appendChild(input);
-
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
-
-                return { status: 'success', message: 'Data submitted to spreadsheet' };
+                return fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors'
+                })
+                .then(response => {
+                    console.log('Data submitted successfully');
+                    return { status: 'success', message: 'Data submitted to spreadsheet' };
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    return { status: 'error', message: error.toString() };
+                });
             };
         });
 
@@ -2343,10 +2345,16 @@
 
             console.log('Submitting Non-Quince Return:', submissionData);
 
-            // Use form submission to bypass CORS
-            sendDataToAppsScript(submissionData);
-            showSuccessToast('✓ Non-Quince return recorded!');
-            setTimeout(() => clearNonQuinceReturn(), 500);
+            // Use fetch to send data and stay on page
+            sendDataToAppsScript(submissionData)
+                .then(response => {
+                    showSuccessToast('✓ Non-Quince return recorded!');
+                    clearNonQuinceReturn();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorToast('Error recording return');
+                });
         }
 
         function clearNonQuinceReturn() {
@@ -2378,10 +2386,16 @@
 
             console.log('Submitting Loose Item:', submissionData);
 
-            // Use form submission to bypass CORS
-            sendDataToAppsScript(submissionData);
-            showSuccessToast('✓ Loose item recorded!');
-            setTimeout(() => clearLooseItem(), 500);
+            // Use fetch to send data and stay on page
+            sendDataToAppsScript(submissionData)
+                .then(response => {
+                    showSuccessToast('✓ Loose item recorded!');
+                    clearLooseItem();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorToast('Error recording loose item');
+                });
         }
 
         function clearLooseItem() {
