@@ -2413,42 +2413,26 @@
 
             console.log('Submitting Loose Item:', submissionData);
 
-            // Clear form
-            clearLooseItem();
+            // Send data and wait for response with Bin#
+            sendDataToAppsScript(submissionData)
+                .then(response => {
+                    console.log('Response:', response);
 
-            // Show initial success
-            alert('✓ Loose Item Recorded Successfully!\n\nFetching assigned Bin #...');
+                    // Data is saved, now show the Bin#
+                    const binNumber = response && response.binNumber ? response.binNumber : 'Check spreadsheet';
+                    alert('✓ Loose Item Recorded Successfully!\n\nAssigned Bin #: ' + binNumber);
 
-            // Send data in background
-            sendDataToAppsScript(submissionData);
-
-            // After 2 seconds, fetch and show the latest Bin#
-            setTimeout(() => {
-                fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: new URLSearchParams({
-                        data: JSON.stringify({
-                            action: 'getLatestBinNumber'
-                        })
-                    })
-                })
-                .then(response => response.text())
-                .then(text => {
-                    try {
-                        const result = JSON.parse(text);
-                        const binNumber = result.binNumber || 'Check spreadsheet';
-                        alert('✓ Assigned Bin #: ' + binNumber);
-                    } catch (e) {
-                        console.log('Could not parse bin response');
-                    }
+                    // Clear form after showing Bin#
+                    clearLooseItem();
                 })
                 .catch(error => {
-                    console.log('Could not fetch bin number');
+                    console.error('Error:', error);
+                    alert('✓ Loose Item Recorded Successfully!\n\nCheck spreadsheet for Bin #');
+                    clearLooseItem();
                 })
                 .finally(() => {
                     isLooseItemSubmitting = false;
                 });
-            }, 2000);
         }
 
         function clearLooseItem() {
