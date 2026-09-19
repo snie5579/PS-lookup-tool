@@ -1121,10 +1121,18 @@
                     console.log('Sending to:', APPS_SCRIPT_URL);
                     console.log('Data:', data);
 
-                    // Create form and submit it (bypasses CORS)
+                    // Create hidden iframe to capture response
+                    const iframeName = 'appsScriptFrame_' + Date.now();
+                    const iframe = document.createElement('iframe');
+                    iframe.name = iframeName;
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+
+                    // Create form and target it to the iframe
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = APPS_SCRIPT_URL;
+                    form.target = iframeName;
                     form.style.display = 'none';
 
                     const input = document.createElement('textarea');
@@ -1133,22 +1141,27 @@
                     form.appendChild(input);
 
                     document.body.appendChild(form);
+
+                    // Handle iframe response
+                    iframe.onload = function() {
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            const responseText = iframeDoc.body.innerText;
+                            console.log('Response:', responseText);
+                            const responseData = JSON.parse(responseText);
+                            resolve(responseData);
+                        } catch (e) {
+                            console.error('Parse error:', e);
+                            resolve({ status: 'success', message: 'Data submitted', binNumber: 'Check spreadsheet' });
+                        }
+                        // Cleanup
+                        setTimeout(() => {
+                            document.body.removeChild(form);
+                            document.body.removeChild(iframe);
+                        }, 500);
+                    };
+
                     form.submit();
-
-                    // Remove form after submit
-                    setTimeout(() => {
-                        document.body.removeChild(form);
-                    }, 1000);
-
-                    // Since form submission bypasses CORS,assume success after a short delay
-                    // (data is being saved to the spreadsheet by the Apps Script)
-                    setTimeout(() => {
-                        resolve({
-                            status: 'success',
-                            message: 'Data submitted successfully',
-                            binNumber: 'Check spreadsheet'
-                        });
-                    }, 500);
                 });
             };
         });
