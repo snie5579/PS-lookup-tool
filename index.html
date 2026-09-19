@@ -1115,6 +1115,25 @@
                     performSearch();
                 });
             }
+
+            // Function to send data to Apps Script using form submission (bypasses CORS)
+            window.sendDataToAppsScript = function(data) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = APPS_SCRIPT_URL;
+                form.style.display = 'none';
+
+                const input = document.createElement('textarea');
+                input.name = 'data';
+                input.value = JSON.stringify(data);
+                form.appendChild(input);
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+
+                return { status: 'success', message: 'Data submitted to spreadsheet' };
+            };
         });
 
         // Toast notification function
@@ -2324,24 +2343,10 @@
 
             console.log('Submitting Non-Quince Return:', submissionData);
 
-            fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(submissionData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Response:', data);
-                if (data.status === 'success') {
-                    showSuccessToast('✓ Non-Quince return recorded!');
-                    setTimeout(() => clearNonQuinceReturn(), 500);
-                } else {
-                    alert('❌ Error: ' + (data.message || 'Failed to save'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Error submitting data: ' + error.message);
-            });
+            // Use form submission to bypass CORS
+            sendDataToAppsScript(submissionData);
+            showSuccessToast('✓ Non-Quince return recorded!');
+            setTimeout(() => clearNonQuinceReturn(), 500);
         }
 
         function clearNonQuinceReturn() {
@@ -2373,24 +2378,10 @@
 
             console.log('Submitting Loose Item:', submissionData);
 
-            fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(submissionData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Response:', data);
-                if (data.status === 'success') {
-                    showSuccessToast('✓ Loose item recorded!');
-                    setTimeout(() => clearLooseItem(), 500);
-                } else {
-                    alert('❌ Error: ' + (data.message || 'Failed to save'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Error submitting data: ' + error.message);
-            });
+            // Use form submission to bypass CORS
+            sendDataToAppsScript(submissionData);
+            showSuccessToast('✓ Loose item recorded!');
+            setTimeout(() => clearLooseItem(), 500);
         }
 
         function clearLooseItem() {
