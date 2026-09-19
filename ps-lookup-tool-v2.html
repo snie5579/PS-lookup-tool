@@ -1,0 +1,2601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PS Lookup Tool - QRC1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 30px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: #f0f4ff;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e8eaf6;
+            color: #667eea;
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5f5;
+        }
+
+        .btn-manual {
+            background: #ff9800;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-manual:hover {
+            background: #f57c00;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .no-results {
+            background: #fffbf0;
+            border: 2px dashed #ff9800;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .no-results:hover {
+            background: #fff8e1;
+            border-color: #f57c00;
+        }
+
+        .no-results-action {
+            color: #ff9800;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 300px;
+        }
+
+        .result-row {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .result-row:hover {
+            background: #f8f9fa;
+        }
+
+        .result-cell {
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .result-cell-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .result-cell-value {
+            color: #2c3e50;
+            word-break: break-all;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .sku-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .sku-section-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .sku-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .sku-row {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .btn-add-sku {
+            background: #667eea;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-add-sku:hover {
+            background: #5568d3;
+        }
+
+        .sku-list {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .sku-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sku-item:last-child {
+            border-bottom: none;
+        }
+
+        .sku-item-info {
+            flex: 1;
+        }
+
+        .sku-item-sku {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 13px;
+        }
+
+        .sku-item-status {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .status-badge.sellable {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.revive {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .btn-remove-sku {
+            background: #ef5350;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-remove-sku:hover {
+            background: #c62828;
+        }
+
+        /* Review Modal */
+        .review-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .review-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .review-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .review-item-sku {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .review-item-details {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .review-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-detail-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .review-detail-value {
+            color: #2c3e50;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #667eea;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-submit {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background: #45a049;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Tab Styles */
+        .tabs-container {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-button {
+            padding: 16px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>📦 PS Lookup Tool</h1>
+                <p>QRC1 Warehouse Returns Processing</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 14px; color: #667eea; font-weight: 600;">
+                    👤 <span id="headerUserName">Loading...</span>
+                </p>
+                <button id="changeNameBtn" style="background: none; border: none; color: #667eea; cursor: pointer; font-size: 12px; text-decoration: underline; margin-top: 5px;">Change Name</button>
+            </div>
+        </div>
+
+
+        <!-- Tab Navigation -->
+        <div class="tabs-container">
+            <button class="tab-button active" onclick="switchTab('quince')">
+                🏢 Quince Products
+            </button>
+            <button class="tab-button" onclick="switchTab('non-quince')">
+                📦 Non-Quince Products
+            </button>
+            <button class="tab-button" onclick="switchTab('boxing')">
+                📮 Boxing
+            </button>
+        </div>
+
+        <!-- QUINCE TAB -->
+        <div id="quince-tab" class="tab-content active">
+        <!-- Search Section -->
+        <div class="section search-section">
+            <div class="section-title">🔍 Search Inventory</div>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Barcode</label>
+                    <input type="text" id="barcode" placeholder="e.g., 123456789">
+                </div>
+                <div class="input-group">
+                    <label>SKU</label>
+                    <input type="text" id="sku" placeholder="e.g., SKU123">
+                </div>
+                <div class="input-group">
+                    <label>Long SKU</label>
+                    <input type="text" id="longSku" placeholder="e.g., LONG-SKU-123">
+                </div>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Quality Check Status</label>
+                    <select id="qualityCheckStatus">
+                        <option value="">-- Select Status --</option>
+                        <option value="No_Issue">✓ No Issue</option>
+                        <option value="Defective">⚠️ Defective</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Processing Status</label>
+                    <select id="processingStatus">
+                        <option value="">-- Select Status --</option>
+                        <option value="Processed">Processed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button class="btn-primary" id="searchBtn">Search</button>
+                <button class="btn-secondary" onclick="clearLookerFilters()">Clear</button>
+            </div>
+
+            <button class="btn-manual" onclick="openManualEntryModal()">+ Manually Record Return Item</button>
+        </div>
+
+        <!-- Sample Data Results Section -->
+        <div id="resultsSection" style="padding: 30px; background: #e8f4f8; border-radius: 8px; margin-top: 40px; border: 2px solid #667eea; min-height: 100px; display: block !important; visibility: visible !important;">
+            <div style="margin-bottom: 20px; font-weight: 700; color: #2c3e50; font-size: 18px;">📊 Search Results</div>
+            <div id="sampleDataContainer" style="background: white; border-radius: 6px; overflow-x: auto; border: 1px solid #ddd; width: 100%;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Quince Return ID</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">SKU</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Long SKU</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Barcode</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Box ID</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Shipment ASN</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Tracking Number</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Quality Status</th>
+                            <th style="padding: 14px; text-align: left; font-weight: 600;">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sampleDataRows">
+                        <!-- Sample rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107; font-size: 13px; color: #856404;">
+                <strong>💡 Demo Mode:</strong> Showing sample data. When your Looker admin enables iframe embedding, this will display live Looker dashboard data.
+            </div>
+        </div>
+        </div><!-- END QUINCE TAB -->
+
+        <!-- NON-QUINCE TAB -->
+        <div id="non-quince-tab" class="tab-content">
+            <!-- Mode Selector (Record vs Ship) -->
+            <div class="section" style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <div style="font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 15px;">🎯 Select Action:</div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="tab-button" style="flex: 1; border: 2px solid #667eea; background: #667eea; color: white; padding: 12px; border-radius: 6px; cursor: pointer;" id="modeRecordBtn" onclick="switchNonQuinceMode('record')">
+                        ➕ Record New Item
+                    </button>
+                    <button type="button" class="tab-button" style="flex: 1; border: 2px solid #ddd; background: white; color: #667eea; padding: 12px; border-radius: 6px; cursor: pointer;" id="modeShipBtn" onclick="switchNonQuinceMode('ship')">
+                        📦 Ship Item
+                    </button>
+                </div>
+            </div>
+
+            <!-- Type Selector (for Record mode) -->
+            <div id="typeSelector" class="section" style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <div style="font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 15px;">📦 Select Item Type:</div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="tab-button" style="flex: 1; border: 2px solid #667eea; background: #667eea; color: white; padding: 12px; border-radius: 6px; cursor: pointer;" id="typeReturnBtn" onclick="switchNonQuinceType('return')">
+                        🏷️ Non-Quince Return (with RMA)
+                    </button>
+                    <button type="button" class="tab-button" style="flex: 1; border: 2px solid #ddd; background: white; color: #667eea; padding: 12px; border-radius: 6px; cursor: pointer;" id="typeLooseBtn" onclick="switchNonQuinceType('loose')">
+                        🔍 Loose Non-Quince Item (No RMA)
+                    </button>
+                </div>
+            </div>
+
+            <!-- NON-QUINCE RETURN FORM -->
+            <div id="nqReturnForm" class="section search-section">
+                <div class="section-title">📝 Non-Quince Return with RMA</div>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Customer returned a non-Quince product. Track it for shipping back, donation, or inventory.</p>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Quince Returns ID (RMA) *</label>
+                        <input type="text" id="nqRmaId" placeholder="e.g., QR-2024-001">
+                    </div>
+                    <div class="input-group">
+                        <label>Customer Name *</label>
+                        <input type="text" id="nqCustomerName" placeholder="e.g., John Doe">
+                    </div>
+                </div>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Location (Cart/Bin) *</label>
+                        <input type="text" id="nqLocation" placeholder="e.g., Bin A1, Cart 5">
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button class="btn-primary" onclick="submitNonQuinceReturn()">✓ Record Return</button>
+                    <button class="btn-secondary" onclick="clearNonQuinceReturn()">Clear</button>
+                </div>
+            </div>
+
+            <!-- LOOSE ITEM FORM -->
+            <div id="nqLooseForm" class="section search-section" style="display: none;">
+                <div class="section-title">🔍 Loose Non-Quince Item (No RMA)</div>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Found/discovered non-Quince items with no associated return. Record for tracking and disposition.</p>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Product Brand *</label>
+                        <input type="text" id="looseProductBrand" placeholder="e.g., Nike, Sony, Apple">
+                    </div>
+                    <div class="input-group">
+                        <label>Product Description *</label>
+                        <input type="text" id="looseProductDescription" placeholder="e.g., Running Shoes Size 10, Black Headphones">
+                    </div>
+                </div>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Location (Cart/Bin) *</label>
+                        <input type="text" id="looseLocation" placeholder="e.g., Bin C3, Shelf 2">
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button class="btn-primary" onclick="submitLooseItem()">✓ Record Loose Item</button>
+                    <button class="btn-secondary" onclick="clearLooseItem()">Clear</button>
+                </div>
+            </div>
+
+            <!-- SHIP MODE SECTION -->
+            <div id="nqShipMode" style="display: none;">
+                <div class="section search-section">
+                    <div class="section-title">📦 Ship Non-Quince Items</div>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Search for items and mark them as "Ship out"</p>
+
+                    <!-- Ship Return Items -->
+                    <div style="margin-bottom: 30px; padding: 20px; background: #f0f4ff; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #667eea; margin-bottom: 15px;">🏷️ Ship Non-Quince Return (with RMA)</div>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Search by RMA or Customer Name *</label>
+                                <input type="text" id="shipSearchRmaOrCustomer" placeholder="e.g., QR-2024-001 or John Doe">
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="searchNonQuinceReturnToShip()">🔎 Search</button>
+                        <div id="shipReturnResultsContainer" style="margin-top: 15px;"></div>
+                    </div>
+
+                    <!-- Ship Loose Items -->
+                    <div style="margin-bottom: 30px; padding: 20px; background: #fff3e0; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #e65100; margin-bottom: 15px;">🔍 Ship Loose Non-Quince Item</div>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Search by Brand or Description *</label>
+                                <input type="text" id="shipSearchBrand" placeholder="e.g., Nike or Running Shoes">
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="searchLooseItemToShip()">🔎 Search</button>
+                        <div id="shipLooseResultsContainer" style="margin-top: 15px;"></div>
+                    </div>
+
+                    <!-- Auto-Donate Button -->
+                    <div style="padding: 20px; background: #e8f5e9; border-radius: 8px; text-align: center;">
+                        <div style="font-weight: 600; color: #2e7d32; margin-bottom: 15px;">🎁 Auto-Donate Items Older than 2 Weeks</div>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 15px;">This will find all Non-Quince items older than 2 weeks and mark them as DONATED</p>
+                        <button class="btn-primary" style="background: #4caf50;" onclick="autoDonateOldItems()">✓ Run Auto-Donate</button>
+                        <div id="autoDonateResultsContainer" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Message Section -->
+            <div class="section results-section" id="nqRecordsSection" style="display: none;">
+                <div class="section-title">✓ Record Saved</div>
+                <div id="nqRecordsContainer" style="background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;"></div>
+            </div>
+        </div><!-- END NON-QUINCE TAB -->
+
+        <!-- BOXING TAB -->
+        <div id="boxing-tab" class="tab-content">
+            <!-- PHASE 1: SCANNING -->
+            <div id="scanPhase" class="section search-section">
+                <div class="section-title">📮 Phase 1: Scan & Sort Mixed Items</div>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Scan all mixed grade items. System will auto-group by grade as you scan.</p>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Scan Barcode (Press Enter to add)</label>
+                        <input type="text" id="barcodeInput" placeholder="Scan barcode here..." autofocus>
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button class="btn-primary" onclick="startScanning()">🔄 Start Scanning</button>
+                    <button class="btn-secondary" onclick="clearAllScans()">Clear All</button>
+                    <button class="btn-primary" style="background: #4caf50; margin-left: auto;" onclick="finishScanning()">✓ Done Scanning</button>
+                </div>
+            </div>
+
+            <!-- LIVE SCANNING STATS -->
+            <div class="section" style="background: #f8f9fa; border-radius: 8px; padding: 30px;">
+                <div class="section-title">📊 Live Scan Summary</div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px;" id="gradeCountsDisplay">
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                        <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 8px;">Total Scanned</div>
+                        <div style="font-size: 28px; font-weight: 700; color: #667eea;" id="totalItemsCount">0</div>
+                    </div>
+                </div>
+
+                <!-- Current Boxes Display -->
+                <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #333; margin-bottom: 12px;">📦 Current Boxes:</div>
+                    <div id="currentBoxesDisplay" style="display: grid; gap: 10px; margin-bottom: 15px;"></div>
+                    <button class="btn-primary" style="background: #ff9800;" onclick="openBoxFullModal()">📦 Box Full</button>
+                </div>
+
+                <div id="lastScannedSection" style="background: #f0f4ff; border-radius: 8px; padding: 20px; display: none; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #667eea; margin-bottom: 10px;">ℹ️ Last Scanned:</div>
+                    <div id="lastScannedInfo" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- PHASE 2: ASSIGN BOX NUMBERS -->
+            <div id="assignPhase" class="section search-section" style="display: none;">
+                <div class="section-title">📮 Phase 2: Assign Box Numbers & Save</div>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">All items have been scanned and grouped by grade. Now assign box numbers for each grade and save.</p>
+
+                <div id="gradeAssignmentContainer"></div>
+
+                <div class="button-row">
+                    <button class="btn-primary" style="background: #4caf50;" onclick="saveAllBoxes()">💾 Save All Boxes to Sheets</button>
+                    <button class="btn-secondary" onclick="restartScanning()">↩️ Back to Scanning</button>
+                </div>
+            </div>
+        </div><!-- END BOXING TAB -->
+    </div>
+
+    <!-- Box Full Modal -->
+    <div class="modal" id="boxFullModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn" onclick="closeBoxFullModal()">&times;</span>
+            <div class="modal-header">📦 Mark Box as Full</div>
+
+            <div style="padding: 20px;">
+                <p style="color: #666; margin-bottom: 20px;">Select which grade box is full:</p>
+                <div id="boxFullOptions" style="display: grid; gap: 12px; margin-bottom: 20px;"></div>
+
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeBoxFullModal()">Cancel</button>
+                    <button class="btn-submit" onclick="confirmBoxFull()">✓ Mark as Full</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Entry Modal -->
+    <div class="modal" id="manualEntryModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeManualEntryModal()">&times;</span>
+            <div class="modal-header">📝 Manually Record Return Item</div>
+
+            <div class="modal-form">
+                <div class="form-group">
+                    <label>Return Tracking Number *</label>
+                    <input type="text" id="trackingNumber" placeholder="e.g., RMA12345">
+                </div>
+
+                <div class="form-group">
+                    <label>Customer Name *</label>
+                    <input type="text" id="customerName" placeholder="Enter customer name">
+                </div>
+
+                <!-- SKU Management Section -->
+                <div class="sku-section">
+                    <div class="sku-section-title">📦 Add Items (Multiple SKUs with Different Quality Status & Boxes)</div>
+
+                    <div class="sku-inputs">
+                        <div class="form-group">
+                            <label>SKU *</label>
+                            <input type="text" id="skuInputPerSku" placeholder="e.g., SKU123">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quality Check Status *</label>
+                            <select id="qualityStatusPerSku" onchange="updateManualBoxOptionsPerSku()">
+                                <option value="">-- Select Status --</option>
+                                <option value="No_Issue">✓ No Issue → Sellable</option>
+                                <option value="Defective">⚠️ Defective → Revive</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="boxSelectionPerSku" style="display: none;">
+                            <label>Destination Box *</label>
+                            <div id="boxButtonsPerSku" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn-add-sku" onclick="addSkuWithBox()">+ Add SKU</button>
+                </div>
+
+                <!-- SKU List with Assignments -->
+                <div class="sku-list" id="skuListPerSku"></div>
+
+                <!-- Buttons -->
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeManualEntryModal()">Cancel</button>
+                    <button class="btn-submit" onclick="showManualReviewModal()">Review & Confirm ✓</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal" id="reviewModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeReviewModal()">&times;</span>
+            <div class="modal-header">✓ Review & Confirm</div>
+
+            <div class="review-section">
+                <div class="review-title">Return Information</div>
+                <div style="font-size: 14px; color: #2c3e50;">
+                    <div style="margin-bottom: 8px;"><strong>Tracking #:</strong> <span id="reviewTrackingNumber"></span></div>
+                    <div><strong>Customer:</strong> <span id="reviewCustomerName"></span></div>
+                </div>
+            </div>
+
+            <div class="review-section">
+                <div class="review-title">Items to Process</div>
+                <div id="reviewItemsContainer"></div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeReviewModal()">Back</button>
+                <button class="btn-submit" onclick="confirmManualSubmit()">Submit ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal" style="position: fixed !important; z-index: 9999 !important; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div class="modal-content" style="max-width: 420px; background: white; border-radius: 16px; padding: 50px 40px; text-align: center; box-shadow: 0 25px 80px rgba(0,0,0,0.4);">
+            <h2 style="font-size: 32px; color: #2c3e50; margin-bottom: 12px; font-weight: 700;">📦 PS Lookup Tool</h2>
+            <p style="color: #666; margin-bottom: 35px; font-size: 15px; font-weight: 500;">QRC1 Warehouse Returns Processing</p>
+
+            <div style="margin-bottom: 30px;">
+                <label style="display: block; font-weight: 700; color: #2c3e50; margin-bottom: 14px; text-align: left; font-size: 15px;">Enter Your Name to Continue</label>
+                <input type="text" id="welcomeNameInput" placeholder="e.g., John Smith" style="width: 100%; padding: 14px 16px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; font-family: inherit; transition: all 0.3s; -webkit-appearance: none; appearance: none; box-sizing: border-box;" onkeypress="if(event.key==='Enter') submitWelcomeModal()">
+            </div>
+
+            <button id="welcomeSubmitBtn" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                Get Started →
+            </button>
+
+            <p style="color: #bbb; font-size: 12px; margin-top: 24px; font-weight: 500;">Your name will be saved and remembered</p>
+        </div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqYBDWwef0EYjuhjV8zzsj40jCVol3kZl11KCbV128NicKfCuR4R2Dom7DirO_ScCE/exec';
+        const USE_DEMO_DATA = true; // Set to false to use real Looker data
+
+        // Sample Inventory Data (defined at top for early availability)
+        const sampleInventoryData = [
+            { SKU: 'SKU001', longSKU: 'QUINCE-001-BLK-S', barcode: '1234567890001', quinceReturnID: 'QR-2024-001', boxID: 'BOX-A-001', shipmentASN: 'ASN-001', trackingNumber: 'TRK-001-2024', qualityStatus: 'No_Issue', grade: 'A' },
+            { SKU: 'SKU002', longSKU: 'QUINCE-002-RED-M', barcode: '1234567890002', quinceReturnID: 'QR-2024-002', boxID: 'BOX-A-002', shipmentASN: 'ASN-001', trackingNumber: 'TRK-002-2024', qualityStatus: 'No_Issue', grade: 'A' },
+            { SKU: 'SKU003', longSKU: 'QUINCE-003-BLU-L', barcode: '1234567890003', quinceReturnID: 'QR-2024-003', boxID: 'BOX-C-001', shipmentASN: 'ASN-002', trackingNumber: 'TRK-003-2024', qualityStatus: 'Defective', grade: 'C' },
+            { SKU: 'SKU004', longSKU: 'QUINCE-004-GRN-XL', barcode: '1234567890004', quinceReturnID: 'QR-2024-004', boxID: 'BOX-B-001', shipmentASN: 'ASN-001', trackingNumber: 'TRK-004-2024', qualityStatus: 'No_Issue', grade: 'B' },
+            { SKU: 'SKU005', longSKU: 'QUINCE-005-WHT-S', barcode: '1234567890005', quinceReturnID: 'QR-2024-005', boxID: 'BOX-A-003', shipmentASN: 'ASN-003', trackingNumber: 'TRK-005-2024', qualityStatus: 'No_Issue', grade: 'A' },
+            { SKU: 'SKU006', longSKU: 'QUINCE-006-BLK-M', barcode: '1234567890006', quinceReturnID: 'QR-2024-006', boxID: 'BOX-D-001', shipmentASN: 'ASN-002', trackingNumber: 'TRK-006-2024', qualityStatus: 'Defective', grade: 'D' },
+            { SKU: 'SKU007', longSKU: 'QUINCE-007-PNK-L', barcode: '1234567890007', quinceReturnID: 'QR-2024-007', boxID: 'BOX-A-004', shipmentASN: 'ASN-003', trackingNumber: 'TRK-007-2024', qualityStatus: 'No_Issue', grade: 'A' },
+            { SKU: 'SKU008', longSKU: 'QUINCE-008-GRY-XL', barcode: '1234567890008', quinceReturnID: 'QR-2024-008', boxID: 'BOX-J-001', shipmentASN: 'ASN-001', trackingNumber: 'TRK-008-2024', qualityStatus: 'No_Issue', grade: 'J' },
+        ];
+
+        // LocalStorage username management
+        let currentUserName = '';
+
+        function saveUserName(name) {
+            if (name && name.trim()) {
+                currentUserName = name.trim();
+                localStorage.setItem('psLookupToolUserName', currentUserName);
+            }
+        }
+
+        function getUserName() {
+            return currentUserName;
+        }
+
+        function submitWelcomeModal() {
+            try {
+                const nameInput = document.getElementById('welcomeNameInput');
+                const name = nameInput.value.trim();
+
+                if (!name) {
+                    alert('Please enter your name to continue');
+                    return;
+                }
+
+                saveUserName(name);
+                const modal = document.getElementById('welcomeModal');
+
+                // Ensure modal is hidden
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+                modal.style.visibility = 'hidden';
+                modal.style.opacity = '0';
+
+                updateHeaderName();
+                console.log('Welcome modal closed successfully for user:', name);
+            } catch (error) {
+                console.error('Error in submitWelcomeModal:', error);
+                alert('An error occurred. Please refresh the page and try again.');
+            }
+        }
+
+        function updateHeaderName() {
+            document.getElementById('headerUserName').textContent = currentUserName;
+        }
+
+        function openChangeNameModal() {
+            document.getElementById('welcomeNameInput').value = currentUserName;
+            const modal = document.getElementById('welcomeModal');
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+            document.getElementById('welcomeNameInput').focus();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedName = localStorage.getItem('psLookupToolUserName');
+            const modal = document.getElementById('welcomeModal');
+
+            if (savedName) {
+                // If name is already saved, skip welcome modal
+                currentUserName = savedName;
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+                updateHeaderName();
+            } else {
+                // Show welcome modal and focus on input
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+                setTimeout(function() {
+                    document.getElementById('welcomeNameInput').focus();
+                }, 100);
+            }
+
+            // Setup welcome submit button
+            const welcomeSubmitBtn = document.getElementById('welcomeSubmitBtn');
+            if (welcomeSubmitBtn) {
+                welcomeSubmitBtn.addEventListener('click', submitWelcomeModal);
+            }
+
+            // Setup change name button
+            const changeNameBtn = document.getElementById('changeNameBtn');
+            if (changeNameBtn) {
+                changeNameBtn.addEventListener('click', openChangeNameModal);
+            }
+
+            // Load sample inventory data
+            displaySampleData(sampleInventoryData);
+
+            // Setup search button
+            const searchBtn = document.getElementById('searchBtn');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function() {
+                    performSearch();
+                });
+            }
+        });
+
+        // Toast notification function
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                color: #2c3e50;
+                padding: 20px 40px;
+                border-radius: 10px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-size: 16px;
+                font-weight: 600;
+                text-align: center;
+                animation: fadeInOut 1s ease-in-out;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 1000);
+        }
+
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Sample demo data for testing
+        const demoData = [
+            {
+                'Quince Returns ID': 'QR-2024-001',
+                'RETURN TRACKING NUMBER': 'RMA12345',
+                'Box ID': 'BOX001',
+                'Shipment Asn': 'ASN12345',
+                'Barcode': '123456789012',
+                'SKU': 'SKU-DEMO-001',
+                'Long SKU': 'QUINCE-DEMO-SKU-001-LONG',
+                'Bin Grade': 'A'
+            },
+            {
+                'Quince Returns ID': 'QR-2024-002',
+                'RETURN TRACKING NUMBER': 'RMA12346',
+                'Box ID': 'BOX002',
+                'Shipment Asn': 'ASN12346',
+                'Barcode': '123456789013',
+                'SKU': 'SKU-DEMO-002',
+                'Long SKU': 'QUINCE-DEMO-SKU-002-LONG',
+                'Bin Grade': 'B'
+            }
+        ];
+
+        // Per-SKU Management
+        let skuListWithBox = [];
+        let boxTypes = {
+            'No_Issue': [],
+            'Defective': []
+        };
+        let selectedBoxPerSku = null;
+
+        // Get today's date in format M-D-YY
+        function getTodayDateForBox() {
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            const year = today.getFullYear().toString().slice(-2);
+            return `${month}-${day}-${year}`;
+        }
+
+        // Manual Entry Modal Functions
+        function openManualEntryModal() {
+            document.getElementById('manualEntryModal').classList.add('active');
+            skuListWithBox = [];
+            selectedBoxPerSku = null;
+
+            // Initialize box types with today's date
+            const dateStr = getTodayDateForBox();
+            boxTypes = {
+                'No_Issue': [`Sellable ${dateStr}`],
+                'Defective': [`Revive ${dateStr}`]
+            };
+
+            document.getElementById('skuListPerSku').innerHTML = '';
+            document.getElementById('trackingNumber').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('qualityStatusPerSku').value = '';
+            document.getElementById('skuInputPerSku').value = '';
+            document.getElementById('boxSelectionPerSku').style.display = 'none';
+            document.getElementById('trackingNumber').focus();
+        }
+
+        function closeManualEntryModal() {
+            document.getElementById('manualEntryModal').classList.remove('active');
+        }
+
+        function updateManualBoxOptionsPerSku() {
+            const qualityStatus = document.getElementById('qualityStatusPerSku').value;
+            const boxSelection = document.getElementById('boxSelectionPerSku');
+            const boxButtons = document.getElementById('boxButtonsPerSku');
+
+            if (!qualityStatus) {
+                boxSelection.style.display = 'none';
+                selectedBoxPerSku = null;
+                return;
+            }
+
+            boxSelection.style.display = 'block';
+            selectedBoxPerSku = null;
+
+            const boxes = boxTypes[qualityStatus] || [];
+            const boxClass = qualityStatus === 'No_Issue' ? 'sellable' : 'revive';
+
+            boxButtons.innerHTML = boxes.map(box => `
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <button type="button" class="box-btn ${boxClass}" style="flex: 1; padding: 10px 12px; background: ${qualityStatus === 'No_Issue' ? '#e8f5e9' : '#fff3e0'}; color: ${qualityStatus === 'No_Issue' ? '#2e7d32' : '#e65100'}; border: 2px solid ${qualityStatus === 'No_Issue' ? '#4caf50' : '#ff9800'}; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;" onclick="selectBoxPerSku('${box}')">
+                        ${box}
+                    </button>
+                    <button type="button" style="padding: 10px 12px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; white-space: nowrap;" onclick="markBoxFull('${qualityStatus}', '${box}')">
+                        Box Full
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function selectBoxPerSku(boxName) {
+            selectedBoxPerSku = boxName;
+            // Reset all buttons
+            document.querySelectorAll('#boxButtonsPerSku .box-btn').forEach(btn => {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.transform = '';
+            });
+            // Highlight selected button by finding it in the DOM
+            const buttons = document.querySelectorAll('#boxButtonsPerSku .box-btn');
+            buttons.forEach(btn => {
+                if (btn.textContent.trim() === boxName) {
+                    btn.style.background = '#667eea';
+                    btn.style.color = 'white';
+                    btn.style.transform = 'scale(1.05)';
+                }
+            });
+        }
+
+        function markBoxFull(qualityStatus, currentBox) {
+            const dateStr = getTodayDateForBox();
+            const prefix = qualityStatus === 'No_Issue' ? 'Sellable' : 'Revive';
+
+            // Generate new box name by incrementing number or creating with (2)
+            let newBoxName;
+            if (currentBox.includes('(')) {
+                // Format: "Sellable 9-17-26 (2)" -> "Sellable 9-17-26 (3)"
+                const match = currentBox.match(/\((\d+)\)/);
+                if (match) {
+                    const nextNum = parseInt(match[1]) + 1;
+                    newBoxName = currentBox.replace(/\(\d+\)/, `(${nextNum})`);
+                } else {
+                    newBoxName = `${prefix} ${dateStr} (2)`;
+                }
+            } else {
+                // Format: "Sellable 9-17-26" -> "Sellable 9-17-26 (2)"
+                newBoxName = `${prefix} ${dateStr} (2)`;
+            }
+
+            // Remove full box from list
+            const index = boxTypes[qualityStatus].indexOf(currentBox);
+            if (index > -1) {
+                boxTypes[qualityStatus].splice(index, 1);
+            }
+
+            // Add new box to list
+            if (!boxTypes[qualityStatus].includes(newBoxName)) {
+                boxTypes[qualityStatus].push(newBoxName);
+            }
+
+            selectedBoxPerSku = null;
+
+            // Refresh display and select new box
+            updateManualBoxOptionsPerSku();
+            selectBoxPerSku(newBoxName);
+
+            alert(`✓ Box marked full!\nOld box hidden from selection.\nNew box: ${newBoxName}`);
+        }
+
+        function createNewBoxPerSku() {
+            const boxName = document.getElementById('newBoxInputPerSku').value.trim();
+
+            if (!boxName) {
+                alert('⚠️ Please enter a box name');
+                return;
+            }
+
+            const qualityStatus = document.getElementById('qualityStatusPerSku').value;
+            if (!qualityStatus) {
+                alert('⚠️ Please select Quality Status first');
+                return;
+            }
+
+            if (!boxTypes[qualityStatus]) {
+                boxTypes[qualityStatus] = [];
+            }
+
+            if (boxTypes[qualityStatus].includes(boxName)) {
+                alert('⚠️ This box already exists for ' + (qualityStatus === 'No_Issue' ? 'Sellable' : 'Revive'));
+                return;
+            }
+
+            boxTypes[qualityStatus].push(boxName);
+            document.getElementById('newBoxInputPerSku').value = '';
+            updateManualBoxOptionsPerSku();
+            selectBoxPerSku(boxName);
+
+            // Show success feedback
+            setTimeout(() => {
+                alert('✓ New box created: ' + boxName);
+            }, 100);
+        }
+
+        function addSkuWithBox() {
+            const sku = document.getElementById('skuInputPerSku').value.trim();
+            const qualityStatus = document.getElementById('qualityStatusPerSku').value;
+            const box = selectedBoxPerSku;
+
+            if (!sku || !qualityStatus || !box) {
+                alert('⚠️ Please enter SKU, select Quality Status, and select a Box');
+                return;
+            }
+
+            if (skuListWithBox.some(item => item.sku === sku)) {
+                alert('This SKU is already added');
+                return;
+            }
+
+            skuListWithBox.push({
+                sku,
+                qualityStatus,
+                box
+            });
+
+            // Clear inputs
+            document.getElementById('skuInputPerSku').value = '';
+            document.getElementById('qualityStatusPerSku').value = '';
+            document.getElementById('boxSelectionPerSku').style.display = 'none';
+            document.getElementById('skuInputPerSku').focus();
+            displaySkuListWithBox();
+        }
+
+        function displaySkuListWithBox() {
+            const skuListDiv = document.getElementById('skuListPerSku');
+
+            if (skuListWithBox.length === 0) {
+                skuListDiv.innerHTML = '';
+                return;
+            }
+
+            skuListDiv.innerHTML = skuListWithBox.map((item, index) => {
+                const isSellable = item.qualityStatus === 'No_Issue';
+                const badgeStyle = isSellable ? 'background: #e8f5e9; color: #2e7d32;' : 'background: #fff3e0; color: #e65100;';
+                const statusLabel = isSellable ? '✓ Sellable' : '⚠️ Revive';
+
+                return `
+                    <div class="sku-item" style="${badgeStyle} margin-bottom: 0;">
+                        <div class="sku-item-info">
+                            <div class="sku-item-sku">${item.sku}</div>
+                            <div class="sku-item-status">
+                                <span class="status-badge ${isSellable ? 'sellable' : 'revive'}">${statusLabel}</span>
+                                → <strong>${item.box}</strong>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-remove-sku" onclick="removeSkuWithBox(${index})">Remove</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeSkuWithBox(index) {
+            skuListWithBox.splice(index, 1);
+            displaySkuListWithBox();
+        }
+
+        function showManualReviewModal() {
+            const trackingNumber = document.getElementById('trackingNumber').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+
+            if (!trackingNumber || !customerName) {
+                alert('⚠️ Please enter Tracking Number and Customer Name');
+                return;
+            }
+
+            if (skuListWithBox.length === 0) {
+                alert('⚠️ Please add at least one SKU');
+                return;
+            }
+
+            // Populate review modal
+            document.getElementById('reviewTrackingNumber').textContent = trackingNumber;
+            document.getElementById('reviewCustomerName').textContent = customerName;
+
+            const reviewContainer = document.getElementById('reviewItemsContainer');
+            reviewContainer.innerHTML = skuListWithBox.map((item, index) => {
+                const isSellable = item.qualityStatus === 'No_Issue';
+                const statusLabel = isSellable ? '✓ Sellable' : '⚠️ Revive';
+
+                return `
+                    <div class="review-item">
+                        <div class="review-item-sku">${item.sku}</div>
+                        <div class="review-item-details">
+                            <div class="review-detail">
+                                <div class="review-detail-label">Quality Status</div>
+                                <div class="review-detail-value">
+                                    <span class="status-badge ${isSellable ? 'sellable' : 'revive'}">${statusLabel}</span>
+                                </div>
+                            </div>
+                            <div class="review-detail">
+                                <div class="review-detail-label">Destination Box</div>
+                                <div class="review-detail-value"><strong>${item.box}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('reviewModal').classList.add('active');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.remove('active');
+        }
+
+        function confirmManualSubmit() {
+            // Use the stored user name
+            const userName = currentUserName;
+            const trackingNumber = document.getElementById('trackingNumber').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+
+            if (!userName) {
+                alert('⚠️ Please sign in with Google or enter your name');
+                return;
+            }
+
+            if (!trackingNumber || !customerName) {
+                alert('⚠️ Please fill in Tracking Number and Customer Name');
+                return;
+            }
+
+            if (skuListWithBox.length === 0) {
+                alert('No items to submit');
+                return;
+            }
+
+            // Prepare data for submission
+            const submissionData = {
+                action: 'saveManualReturn',
+                userName: userName,
+                trackingNumber: trackingNumber,
+                customerName: customerName,
+                items: skuListWithBox.map(item => ({
+                    sku: item.sku,
+                    qualityStatus: item.qualityStatus,
+                    box: item.box
+                }))
+            };
+
+            console.log('Submitting:', submissionData);
+            console.log('Apps Script URL:', APPS_SCRIPT_URL);
+
+            // First try Apps Script
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(submissionData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response:', data);
+                if (data.status === 'success' || data.message === 'Manual return saved successfully') {
+                    showSuccessToast('✓ Manual return saved successfully!');
+                    setTimeout(() => {
+                        closeReviewModal();
+                        closeManualEntryModal();
+                    }, 1000);
+                } else {
+                    alert('❌ Error: ' + (data.message || 'Failed to save'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Fallback: Save to localStorage and offer CSV download
+                saveManualReturnLocally(trackingNumber, customerName, skuListWithBox);
+            });
+        }
+
+        function saveManualReturnLocally(trackingNumber, customerName, items) {
+            // Save to browser localStorage
+            let allReturns = JSON.parse(localStorage.getItem('manualReturns') || '[]');
+            allReturns.push({
+                timestamp: new Date().toISOString(),
+                trackingNumber: trackingNumber,
+                customerName: customerName,
+                items: items
+            });
+            localStorage.setItem('manualReturns', JSON.stringify(allReturns));
+
+            // Show options
+            const csvData = generateCSV(trackingNumber, customerName, items);
+            const message = `✓ Data saved locally!\n\nOptions:\n1. Download as CSV for Google Sheets\n2. Copy data manually\n\nWould you like to download CSV?`;
+
+            if (confirm(message)) {
+                downloadCSV(csvData, `manual-return-${trackingNumber}-${new Date().getTime()}.csv`);
+                alert('✓ CSV downloaded! You can now import it into Google Sheets.');
+                closeReviewModal();
+                closeManualEntryModal();
+            } else {
+                alert('Data saved locally. You can download later from your browser storage.');
+                closeReviewModal();
+                closeManualEntryModal();
+            }
+        }
+
+        function generateCSV(trackingNumber, customerName, items) {
+            let csv = 'Tracking Number,Customer Name,SKU,Quality Status,Destination Box,Timestamp\n';
+            const timestamp = new Date().toLocaleString();
+            items.forEach(item => {
+                csv += `"${trackingNumber}","${customerName}","${item.sku}","${item.qualityStatus}","${item.box}","${timestamp}"\n`;
+            });
+            return csv;
+        }
+
+        function downloadCSV(csvData, filename) {
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // Sample Data Functions (until Looker is enabled)
+        function performSearch() {
+            const barcode = document.getElementById('barcode').value.toLowerCase() || '';
+            const sku = document.getElementById('sku').value.toLowerCase() || '';
+            const longSku = document.getElementById('longSku').value.toLowerCase() || '';
+            const qualityStatus = document.getElementById('qualityCheckStatus').value || '';
+
+            // Filter sample data
+            let filteredData = sampleInventoryData.filter(item => {
+                let matches = true;
+                if (barcode && !item.barcode.toLowerCase().includes(barcode)) matches = false;
+                if (sku && !item.SKU.toLowerCase().includes(sku)) matches = false;
+                if (longSku && !item.longSKU.toLowerCase().includes(longSku)) matches = false;
+                if (qualityStatus && item.qualityStatus !== qualityStatus) matches = false;
+                return matches;
+            });
+
+            displaySampleData(filteredData);
+        }
+
+        function displaySampleData(data) {
+            const tableBody = document.getElementById('sampleDataRows');
+            if (!tableBody) return;
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="9" style="padding: 30px; text-align: center; color: #999; background: #fafafa;">No matching items found</td></tr>';
+                return;
+            }
+
+            // Build HTML for all rows
+            let html = '';
+            data.forEach((item, idx) => {
+                const bgColor = idx % 2 === 0 ? 'white' : '#fafafa';
+                const qualityBg = item.qualityStatus === 'No_Issue' ? '#d4edda' : '#f8d7da';
+                const qualityText = item.qualityStatus === 'No_Issue' ? '#155724' : '#721c24';
+                const qualityLabel = item.qualityStatus === 'No_Issue' ? '✓ No Issue' : '⚠️ Defective';
+                const gradeColor = getGradeColor(item.grade);
+
+                html += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 14px; border-bottom: 1px solid #eee; font-weight: 600; color: #667eea;">${item.quinceReturnID}</td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee;">${item.SKU}</td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee;">${item.longSKU}</td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 12px; color: #666;">${item.barcode}</td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee; font-weight: 600; color: #e67e22;">${item.boxID}</td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee; font-weight: 600; color: #27ae60;">${item.shipmentASN}</td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee;">
+                            <a href="https://return.onequince.com/process-return?trackingNumber=${item.trackingNumber}" target="_blank" style="font-weight: 600; color: #c0392b; text-decoration: none; border-bottom: 2px solid #c0392b;">
+                                ${item.trackingNumber}
+                            </a>
+                        </td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee;">
+                            <span style="background: ${qualityBg}; color: ${qualityText}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
+                                ${qualityLabel}
+                            </span>
+                        </td>
+                        <td style="padding: 14px; border-bottom: 1px solid #eee;">
+                            <span style="background: ${gradeColor.bg}; color: ${gradeColor.text}; padding: 6px 10px; border-radius: 4px; font-weight: 600; font-size: 13px;">
+                                ${item.grade}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        }
+
+        function getGradeColor(grade) {
+            const colors = {
+                'A': { bg: '#d4edda', text: '#155724' },  // Green - Sellable
+                'B': { bg: '#d1ecf1', text: '#0c5460' },  // Light Blue - PS
+                'C': { bg: '#fff3cd', text: '#856404' },  // Yellow - Revive
+                'D': { bg: '#f8d7da', text: '#721c24' },  // Red - Donation
+                'J': { bg: '#e2e3e5', text: '#383d41' },  // Gray - Refurb
+                'H': { bg: '#cfe2ff', text: '#084298' },  // Blue - Rebox
+                'I': { bg: '#f5c2c7', text: '#842029' }   // Pink - Liquidation
+            };
+            return colors[grade] || { bg: '#e2e3e5', text: '#383d41' };
+        }
+
+        function clearLookerFilters() {
+            document.getElementById('barcode').value = '';
+            document.getElementById('sku').value = '';
+            document.getElementById('longSku').value = '';
+            document.getElementById('qualityCheckStatus').value = '';
+            document.getElementById('processingStatus').value = '';
+
+            // Show all sample data
+            displaySampleData(sampleInventoryData);
+        }
+
+        // Search Functions
+        function search() {
+            showLoading();
+
+            const searchParams = {
+                barcode: document.getElementById('barcode').value,
+                sku: document.getElementById('sku').value,
+                longSku: document.getElementById('longSku').value,
+                qualityCheckStatus: document.getElementById('qualityCheckStatus').value,
+                processingStatus: document.getElementById('processingStatus').value
+            };
+
+            if (USE_DEMO_DATA) {
+                // Simulate search with demo data
+                setTimeout(() => {
+                    const results = demoData.filter(item => {
+                        return (!searchParams.returnTrackingNumber || item['RETURN TRACKING NUMBER'].includes(searchParams.returnTrackingNumber)) &&
+                               (!searchParams.sku || item['SKU'].includes(searchParams.sku)) &&
+                               (!searchParams.boxId || item['Box ID'].includes(searchParams.boxId));
+                    });
+
+                    if (results.length === 0) {
+                        showNoResults('Cannot find result');
+                    } else {
+                        displayResults(results);
+                    }
+                }, 500);
+            } else {
+                // Real Looker API call
+                const searchValue = searchParams.barcode || searchParams.sku || searchParams.longSku;
+                const searchType = searchParams.barcode ? 'barcode' : 'sku';
+
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'searchLookerProduct',
+                        searchValue: searchValue,
+                        searchType: searchType
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Looker response:', data);
+                    if (data.status === 'success' && data.items && data.items.length > 0) {
+                        displayResults(data.items);
+                    } else {
+                        showNoResults(data.message || 'Cannot find result');
+                    }
+                })
+                .catch(error => showError('Failed to search: ' + error.message));
+            }
+        }
+
+        function displayResults(results) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            let tableHTML = '<div class="results-header">';
+            if (results.length > 1) {
+                tableHTML += '<input type="text" class="filter-input" id="resultsFilter" placeholder="Filter results...">';
+                tableHTML += '<span id="filterStats" style="font-size: 12px; color: #666;">Showing ' + results.length + ' results</span>';
+            }
+            tableHTML += '</div>';
+
+            tableHTML += '<div style="overflow-x: auto;"><div class="result-row" style="font-weight: 600; background: #f0f4ff; color: #667eea;">' +
+                '<div class="result-cell">Quince Return ID</div>' +
+                '<div class="result-cell">Tracking Number</div>' +
+                '<div class="result-cell">Box ID</div>' +
+                '<div class="result-cell">Shipment ASN</div>' +
+                '<div class="result-cell">Barcode</div>' +
+                '<div class="result-cell">SKU</div>' +
+                '<div class="result-cell">Long SKU</div>' +
+                '<div class="result-cell">Bin Grade</div>' +
+                '</div>';
+
+            results.forEach(item => {
+                const trackingNumber = item['RETURN TRACKING NUMBER'] || 'N/A';
+                const trackingLink = trackingNumber !== 'N/A'
+                    ? `<a href="https://return.onequince.com/process-return?trackingNumber=${trackingNumber}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600; cursor: pointer;">${trackingNumber} 🔗</a>`
+                    : 'N/A';
+
+                tableHTML += '<div class="result-row result-row-data">' +
+                    `<div class="result-cell"><span class="result-cell-label">ID</span><span class="result-cell-value">${item['Quince Returns ID'] || item['Quince Return ID'] || 'N/A'}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">Track</span><span class="result-cell-value">${trackingLink}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">Box</span><span class="result-cell-value">${item['Box ID'] || 'N/A'}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">ASN</span><span class="result-cell-value">${item['Shipment Asn'] || 'N/A'}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">Barcode</span><span class="result-cell-value">${item['Barcode'] || 'N/A'}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">SKU</span><span class="result-cell-value">${item['SKU'] || 'N/A'}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">Long SKU</span><span class="result-cell-value">${item['Long SKU'] || 'N/A'}</span></div>` +
+                    `<div class="result-cell"><span class="result-cell-label">Grade</span><span class="result-cell-value">${item['Bin Grade'] || 'N/A'}</span></div>` +
+                    '</div>';
+            });
+
+            tableHTML += '</div>';
+
+            resultsContainer.innerHTML = tableHTML;
+            resultsSection.classList.add('active');
+
+            // Add filter functionality if there are multiple results
+            if (results.length > 1) {
+                const filterInput = document.getElementById('resultsFilter');
+                const filterStats = document.getElementById('filterStats');
+                const totalResults = results.length;
+
+                filterInput.addEventListener('keyup', () => {
+                    const filterValue = filterInput.value.toLowerCase();
+                    const rows = document.querySelectorAll('.result-row-data');
+                    let visibleCount = 0;
+
+                    rows.forEach(row => {
+                        const text = row.innerText.toLowerCase();
+                        if (text.includes(filterValue)) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+
+                    filterStats.textContent = `Showing ${visibleCount} of ${totalResults} results`;
+                });
+            }
+        }
+
+        function showNoResults(message) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            resultsContainer.innerHTML = `
+                <div class="no-results" onclick="openManualEntryModal()">
+                    <div style="font-size: 16px; font-weight: 600;">⚠️ ${message}</div>
+                    <div class="no-results-action">👆 Click here to manually record this return item</div>
+                </div>
+            `;
+            resultsSection.classList.add('active');
+        }
+
+        function showError(message) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            resultsContainer.innerHTML = `<div class="error">❌ ${message}</div>`;
+            resultsSection.classList.add('active');
+        }
+
+        function showLoading() {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <span class="loading-spinner"></span>
+                    Searching...
+                </div>
+            `;
+            resultsSection.classList.add('active');
+        }
+
+        function clearForm() {
+            document.getElementById('barcode').value = '';
+            document.getElementById('sku').value = '';
+            document.getElementById('longSku').value = '';
+            document.getElementById('qualityCheckStatus').value = '';
+            document.getElementById('processingStatus').value = '';
+
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('barcode').focus();
+        }
+
+        // Boxing Management - Two Phase Workflow
+        let scannedItems = {}; // { barcode: { grade, sku }, ... }
+        let gradeGrouped = {}; // { 'A': [barcodes], 'B': [barcodes], ... }
+        let isScanning = false;
+        let currentBoxes = {}; // { 'A': 'Grade A - FN', 'B': 'Grade B - FN', ... }
+        let fullBoxes = {}; // { 'A': ['Grade A - FN (FULL)'], ... }
+        let selectedGradeForBoxFull = null;
+
+        function getGradeColor(grade) {
+            const colors = {
+                'A': '#2e7d32',  // Green - Sellable
+                'B': '#f57c00',  // Orange - PS
+                'C': '#c62828',  // Red - Revive
+                'J': '#1565c0',  // Blue - Refurb
+                'D': '#7b1fa2',  // Purple - Donation
+                'H': '#00796b',  // Teal - Rebox
+                'I': '#616161'   // Gray - Liquidation
+            };
+            return colors[grade] || '#666';
+        }
+
+        function startScanning() {
+            isScanning = true;
+            initializeCurrentBoxes();
+            document.getElementById('barcodeInput').focus();
+            document.getElementById('barcodeInput').value = '';
+            alert('📮 Scanning started. Press Enter after each barcode scan.');
+        }
+
+        function clearAllScans() {
+            if (confirm('⚠️ Clear all scanned items?')) {
+                scannedItems = {};
+                gradeGrouped = {};
+                document.getElementById('barcodeInput').value = '';
+                document.getElementById('totalItemsCount').textContent = '0';
+                document.getElementById('lastScannedSection').style.display = 'none';
+                updateGradeCountsDisplay();
+                document.getElementById('barcodeInput').focus();
+            }
+        }
+
+        function scanBarcode(barcode) {
+            if (!barcode) return;
+
+            // Check if already scanned
+            if (scannedItems[barcode]) {
+                alert('⚠️ This barcode was already scanned');
+                return;
+            }
+
+            // Query Looker for grade
+            const data = {
+                action: 'queryItemGrade',
+                barcode: barcode
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                const grade = result.grade || 'Unknown';
+                const sku = result.sku || 'N/A';
+
+                // Add to scanned items
+                scannedItems[barcode] = { grade, sku };
+
+                // Group by grade
+                if (!gradeGrouped[grade]) {
+                    gradeGrouped[grade] = [];
+                }
+                gradeGrouped[grade].push(barcode);
+
+                // Update UI
+                document.getElementById('totalItemsCount').textContent = Object.keys(scannedItems).length;
+                updateGradeCountsDisplay();
+
+                // Show last scanned
+                document.getElementById('lastScannedSection').style.display = 'block';
+                document.getElementById('lastScannedInfo').innerHTML = `
+                    <div>
+                        <div style="font-size: 11px; color: #999; text-transform: uppercase;">Barcode</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #2c3e50;">${barcode}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #999; text-transform: uppercase;">Grade</div>
+                        <div style="font-size: 14px; font-weight: 600; color: ${getGradeColor(grade)};">${grade}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #999; text-transform: uppercase;">SKU</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #2c3e50;">${sku}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #999; text-transform: uppercase;">Total Scanned</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #667eea;">${Object.keys(scannedItems).length}</div>
+                    </div>
+                `;
+
+                document.getElementById('barcodeInput').value = '';
+                document.getElementById('barcodeInput').focus();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error: ' + error.message);
+                document.getElementById('barcodeInput').focus();
+            });
+        }
+
+        function updateGradeCountsDisplay() {
+            const container = document.getElementById('gradeCountsDisplay');
+            const grades = ['A', 'B', 'C', 'J', 'D', 'H', 'I'];
+
+            let html = `
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 8px;">Total Scanned</div>
+                    <div style="font-size: 28px; font-weight: 700; color: #667eea;">${Object.keys(scannedItems).length}</div>
+                </div>
+            `;
+
+            grades.forEach(grade => {
+                const count = gradeGrouped[grade]?.length || 0;
+                if (count > 0) {
+                    html += `
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid ${getGradeColor(grade)};">
+                            <div style="font-size: 12px; color: #999; text-transform: uppercase; margin-bottom: 8px;">Grade ${grade}</div>
+                            <div style="font-size: 28px; font-weight: 700; color: ${getGradeColor(grade)};">${count}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+            updateCurrentBoxesDisplay();
+        }
+
+        function finishScanning() {
+            if (Object.keys(scannedItems).length === 0) {
+                alert('⚠️ No items scanned yet');
+                return;
+            }
+
+            // Show phase 2
+            document.getElementById('scanPhase').style.display = 'none';
+            document.getElementById('assignPhase').style.display = 'block';
+            buildGradeAssignmentForm();
+        }
+
+        function buildGradeAssignmentForm() {
+            const grades = Object.keys(gradeGrouped).sort();
+            let html = `
+                <div style="padding: 15px; background: #f0f4ff; border-radius: 8px; margin-bottom: 20px;">
+                    <strong style="color: #667eea;">📦 Your Current Boxes from Phase 1:</strong>
+                    <div style="margin-top: 10px; display: grid; gap: 8px;">
+            `;
+
+            grades.forEach(grade => {
+                const count = gradeGrouped[grade]?.length || 0;
+                const currentBox = currentBoxes[grade] || `Grade ${grade} - ${currentUserName}`;
+                if (count > 0) {
+                    html += `<div style="font-size: 13px; color: #555;">✓ ${currentBox}: ${count} items</div>`;
+                }
+            });
+
+            html += `</div></div>`;
+
+            grades.forEach(grade => {
+                const count = gradeGrouped[grade].length;
+                const currentBox = currentBoxes[grade] || `Grade ${grade} - ${currentUserName}`;
+
+                html += `
+                    <div style="padding: 20px; background: white; border-radius: 8px; border-left: 4px solid ${getGradeColor(grade)}; margin-bottom: 15px;">
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
+                                Grade ${grade} - ${count} items
+                                <span style="font-size: 12px; color: #999;">(Current Box: ${currentBox})</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: #666;">Sample Barcodes: ${gradeGrouped[grade].slice(0, 3).join(', ')}${gradeGrouped[grade].length > 3 ? '...' : ''}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('gradeAssignmentContainer').innerHTML = html;
+        }
+
+        function assignGradeBox(grade) {
+            const boxNumber = document.getElementById(`boxNumber_${grade}`).value.trim();
+
+            if (!boxNumber) {
+                alert('⚠️ Please enter a box number for Grade ' + grade);
+                return;
+            }
+
+            // Store box number
+            if (!window.gradeBoxes) window.gradeBoxes = {};
+            window.gradeBoxes[grade] = boxNumber;
+
+            document.getElementById(`boxNumber_${grade}`).disabled = true;
+            alert(`✓ Box assigned for Grade ${grade}: ${boxNumber}`);
+        }
+
+        function saveAllBoxes() {
+            if (!window.gradeBoxes || Object.keys(window.gradeBoxes).length === 0) {
+                alert('⚠️ Please assign box numbers first');
+                return;
+            }
+
+            if (!confirm('✓ Save all boxes to sheets? This will create entries for all scanned items.')) {
+                return;
+            }
+
+            // Save each grade to its sheet
+            const grades = Object.keys(gradeGrouped);
+            let savedCount = 0;
+
+            grades.forEach(grade => {
+                const boxNumber = window.gradeBoxes[grade];
+                const barcodes = gradeGrouped[grade];
+
+                if (boxNumber && barcodes.length > 0) {
+                    const data = {
+                        action: 'saveBarcodeListToGrade',
+                        grade: grade,
+                        boxNumber: boxNumber,
+                        barcodes: barcodes
+                    };
+
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log('Saved Grade ' + grade, result);
+                        savedCount++;
+
+                        if (savedCount === grades.length) {
+                            alert(`✓ All boxes saved!\n\n${grades.map(g => `Grade ${g}: ${window.gradeBoxes[g]} (${gradeGrouped[g].length} items)`).join('\n')}`);
+                            restartScanning();
+                        }
+                    })
+                    .catch(error => console.error('Save error:', error));
+                }
+            });
+        }
+
+        function restartScanning() {
+            // Reset everything
+            scannedItems = {};
+            gradeGrouped = {};
+            window.gradeBoxes = {};
+
+            document.getElementById('scanPhase').style.display = 'block';
+            document.getElementById('assignPhase').style.display = 'none';
+            document.getElementById('barcodeInput').value = '';
+            document.getElementById('barcodeInput').focus();
+            document.getElementById('totalItemsCount').textContent = '0';
+            updateGradeCountsDisplay();
+        }
+
+        // Initialize current boxes on page load
+        function initializeCurrentBoxes() {
+            if (Object.keys(currentBoxes).length === 0) {
+                const grades = ['A', 'B', 'C', 'J', 'D', 'H', 'I'];
+                grades.forEach(grade => {
+                    currentBoxes[grade] = `Grade ${grade} - ${currentUserName}`;
+                    fullBoxes[grade] = [];
+                });
+                updateCurrentBoxesDisplay();
+            }
+        }
+
+        function updateCurrentBoxesDisplay() {
+            const display = document.getElementById('currentBoxesDisplay');
+            if (!display) return;
+
+            let html = '';
+            const grades = ['A', 'B', 'C', 'J', 'D', 'H', 'I'];
+
+            grades.forEach(grade => {
+                const itemCount = gradeGrouped[grade] ? gradeGrouped[grade].length : 0;
+                const currentBox = currentBoxes[grade];
+                const color = getGradeColor(grade);
+
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: ${color}22; border-left: 4px solid ${color}; border-radius: 6px;">
+                        <div>
+                            <strong style="color: ${color};">${currentBox}</strong><br/>
+                            <span style="font-size: 12px; color: #666;">${itemCount} items</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            display.innerHTML = html;
+        }
+
+        function openBoxFullModal() {
+            initializeCurrentBoxes();
+            const optionsDiv = document.getElementById('boxFullOptions');
+            let html = '';
+            const grades = ['A', 'B', 'C', 'J', 'D', 'H', 'I'];
+
+            grades.forEach(grade => {
+                const itemCount = gradeGrouped[grade] ? gradeGrouped[grade].length : 0;
+                const currentBox = currentBoxes[grade];
+                const color = getGradeColor(grade);
+
+                if (itemCount > 0) {
+                    html += `
+                        <div onclick="selectedGradeForBoxFull='${grade}'" style="padding: 12px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.3s; border-color: ${color};" class="box-option-${grade}">
+                            <strong style="color: ${color};">${currentBox}</strong><br/>
+                            <span style="font-size: 12px; color: #666;">${itemCount} items</span>
+                        </div>
+                    `;
+                }
+            });
+
+            optionsDiv.innerHTML = html;
+            document.getElementById('boxFullModal').classList.add('active');
+        }
+
+        function closeBoxFullModal() {
+            document.getElementById('boxFullModal').classList.remove('active');
+            selectedGradeForBoxFull = null;
+        }
+
+        function confirmBoxFull() {
+            if (!selectedGradeForBoxFull) {
+                alert('Please select a grade box');
+                return;
+            }
+
+            const grade = selectedGradeForBoxFull;
+            const fullBox = currentBoxes[grade];
+
+            // Mark as full
+            if (!fullBoxes[grade]) fullBoxes[grade] = [];
+            fullBoxes[grade].push(`${fullBox} (FULL)`);
+
+            // Create new box with incremented number
+            let boxNumber = 2;
+            let newBoxName = `Grade ${grade} - ${currentUserName} (${boxNumber})`;
+            while (fullBoxes[grade].includes(newBoxName)) {
+                boxNumber++;
+                newBoxName = `Grade ${grade} - ${currentUserName} (${boxNumber})`;
+            }
+
+            currentBoxes[grade] = newBoxName;
+
+            showSuccessToast(`✓ Box marked full! New box: ${newBoxName}`);
+            updateCurrentBoxesDisplay();
+            closeBoxFullModal();
+        }
+
+        // Allow Enter key to search
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const currentTab = document.querySelector('.tab-content.active').id;
+                const input = e.target;
+
+                if (currentTab === 'quince-tab' && input.id !== 'newBoxInputPerSku') {
+                    search();
+                } else if (currentTab === 'non-quince-tab' && input.id !== 'newBoxInputPerSku') {
+                    // Non-Quince tab handling
+                } else if (currentTab === 'boxing-tab' && input.id === 'barcodeInput' && isScanning) {
+                    e.preventDefault();
+                    scanBarcode(input.value.trim());
+                }
+            }
+        });
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            let tabId;
+            if (tabName === 'quince') {
+                tabId = 'quince-tab';
+            } else if (tabName === 'non-quince') {
+                tabId = 'non-quince-tab';
+            } else if (tabName === 'boxing') {
+                tabId = 'boxing-tab';
+            }
+
+            if (tabId) {
+                document.getElementById(tabId).classList.add('active');
+            }
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Non-Quince Functions
+        // Non-Quince Mode Switching (Record vs Ship)
+        function switchNonQuinceMode(mode) {
+            const recordForms = document.getElementById('typeSelector');
+            const nqReturnForm = document.getElementById('nqReturnForm');
+            const nqLooseForm = document.getElementById('nqLooseForm');
+            const shipMode = document.getElementById('nqShipMode');
+            const recordBtn = document.getElementById('modeRecordBtn');
+            const shipBtn = document.getElementById('modeShipBtn');
+
+            if (mode === 'record') {
+                recordForms.style.display = 'block';
+                nqReturnForm.style.display = 'block';
+                nqLooseForm.style.display = 'none';
+                shipMode.style.display = 'none';
+                recordBtn.style.background = '#667eea';
+                recordBtn.style.color = 'white';
+                recordBtn.style.borderColor = '#667eea';
+                shipBtn.style.background = 'white';
+                shipBtn.style.color = '#667eea';
+                shipBtn.style.borderColor = '#ddd';
+            } else {
+                recordForms.style.display = 'none';
+                nqReturnForm.style.display = 'none';
+                nqLooseForm.style.display = 'none';
+                shipMode.style.display = 'block';
+                recordBtn.style.background = 'white';
+                recordBtn.style.color = '#667eea';
+                recordBtn.style.borderColor = '#ddd';
+                shipBtn.style.background = '#667eea';
+                shipBtn.style.color = 'white';
+                shipBtn.style.borderColor = '#667eea';
+            }
+        }
+
+        // Non-Quince Type Switching
+        function switchNonQuinceType(type) {
+            const returnForm = document.getElementById('nqReturnForm');
+            const looseForm = document.getElementById('nqLooseForm');
+            const returnBtn = document.getElementById('typeReturnBtn');
+            const looseBtn = document.getElementById('typeLooseBtn');
+
+            if (type === 'return') {
+                returnForm.style.display = 'block';
+                looseForm.style.display = 'none';
+                returnBtn.style.background = '#667eea';
+                returnBtn.style.color = 'white';
+                returnBtn.style.borderColor = '#667eea';
+                looseBtn.style.background = 'white';
+                looseBtn.style.color = '#667eea';
+                looseBtn.style.borderColor = '#ddd';
+            } else {
+                returnForm.style.display = 'none';
+                looseForm.style.display = 'block';
+                returnBtn.style.background = 'white';
+                returnBtn.style.color = '#667eea';
+                returnBtn.style.borderColor = '#ddd';
+                looseBtn.style.background = '#667eea';
+                looseBtn.style.color = 'white';
+                looseBtn.style.borderColor = '#667eea';
+            }
+        }
+
+        // Non-Quince Return Functions
+        function submitNonQuinceReturn() {
+            const rmaId = document.getElementById('nqRmaId').value.trim();
+            const customerName = document.getElementById('nqCustomerName').value.trim();
+            const location = document.getElementById('nqLocation').value.trim();
+
+            if (!rmaId || !customerName || !location) {
+                alert('⚠️ Please fill in all fields');
+                return;
+            }
+
+            const submissionData = {
+                action: 'saveNonQuinceProduct',
+                type: 'RMA Return',
+                userName: currentUserName,
+                rmaId: rmaId,
+                customerName: customerName,
+                location: location
+            };
+
+            console.log('Submitting Non-Quince Return:', submissionData);
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(submissionData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    showSuccessToast('✓ Non-Quince return recorded!');
+                    setTimeout(() => clearNonQuinceReturn(), 500);
+                } else {
+                    alert('❌ Error: ' + (data.message || 'Failed to save'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error submitting data: ' + error.message);
+            });
+        }
+
+        function clearNonQuinceReturn() {
+            document.getElementById('nqRmaId').value = '';
+            document.getElementById('nqCustomerName').value = '';
+            document.getElementById('nqLocation').value = '';
+            document.getElementById('nqRmaId').focus();
+        }
+
+        // Loose Item Functions
+        function submitLooseItem() {
+            const brand = document.getElementById('looseProductBrand').value.trim();
+            const description = document.getElementById('looseProductDescription').value.trim();
+            const location = document.getElementById('looseLocation').value.trim();
+
+            if (!brand || !description || !location) {
+                alert('⚠️ Please fill in all fields');
+                return;
+            }
+
+            const submissionData = {
+                action: 'saveNonQuinceProduct',
+                type: 'Loose Item',
+                userName: currentUserName,
+                brand: brand,
+                description: description,
+                location: location
+            };
+
+            console.log('Submitting Loose Item:', submissionData);
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(submissionData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    showSuccessToast('✓ Loose item recorded!');
+                    setTimeout(() => clearLooseItem(), 500);
+                } else {
+                    alert('❌ Error: ' + (data.message || 'Failed to save'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error submitting data: ' + error.message);
+            });
+        }
+
+        function clearLooseItem() {
+            document.getElementById('looseProductBrand').value = '';
+            document.getElementById('looseProductDescription').value = '';
+            document.getElementById('looseLocation').value = '';
+            document.getElementById('looseProductBrand').focus();
+        }
+
+        // ==================== SHIP FUNCTIONS ====================
+
+        function searchNonQuinceReturnToShip() {
+            const searchQuery = document.getElementById('shipSearchRmaOrCustomer').value.trim();
+
+            if (!searchQuery) {
+                alert('⚠️ Please enter RMA or Customer Name');
+                return;
+            }
+
+            const resultsContainer = document.getElementById('shipReturnResultsContainer');
+            resultsContainer.innerHTML = '<div class="loading"><span class="loading-spinner"></span>Searching...</div>';
+
+            const data = {
+                action: 'searchNonQuinceReturn',
+                searchQuery: searchQuery
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Search results:', data);
+
+                if (data.items && data.items.length > 0) {
+                    const item = data.items[0]; // Get first match
+                    resultsContainer.innerHTML = `
+                        <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 15px;">
+                            <div style="margin-bottom: 15px;">
+                                <div style="margin-bottom: 8px;"><strong>RMA:</strong> ${item.rmaId}</div>
+                                <div style="margin-bottom: 8px;"><strong>Customer:</strong> ${item.customerName}</div>
+                                <div style="margin-bottom: 8px;"><strong>Location:</strong> ${item.location}</div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px;">Tracking Number (if called):</label>
+                                <input type="text" id="shipTrackingInput_${item.rowIndex}" placeholder="e.g., FedEx or UPS tracking number" style="width: 100%; padding: 10px; border: 1px solid #2196f3; border-radius: 6px; font-size: 14px;">
+                            </div>
+                            <button class="btn-primary" onclick="updateNonQuinceReturnStatus('${item.rowIndex}', 'Ship out')">✓ Mark as Ship out</button>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = '<div class="error">❌ No matching items found</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsContainer.innerHTML = '<div class="error">❌ Error searching: ' + error.message + '</div>';
+            });
+        }
+
+        function searchLooseItemToShip() {
+            const searchQuery = document.getElementById('shipSearchBrand').value.trim();
+
+            if (!searchQuery) {
+                alert('⚠️ Please enter Brand or Description');
+                return;
+            }
+
+            const resultsContainer = document.getElementById('shipLooseResultsContainer');
+            resultsContainer.innerHTML = '<div class="loading"><span class="loading-spinner"></span>Searching...</div>';
+
+            const data = {
+                action: 'searchLooseItem',
+                searchQuery: searchQuery
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Search results:', data);
+
+                if (data.items && data.items.length > 0) {
+                    const item = data.items[0]; // Get first match
+                    resultsContainer.innerHTML = `
+                        <div style="background: #fff9e6; border: 1px solid #ffc107; border-radius: 8px; padding: 15px;">
+                            <div style="margin-bottom: 15px;">
+                                <div style="margin-bottom: 8px;"><strong>Brand:</strong> ${item.brand}</div>
+                                <div style="margin-bottom: 8px;"><strong>Description:</strong> ${item.description}</div>
+                                <div style="margin-bottom: 8px;"><strong>Location (Bin):</strong> ${item.location}</div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px;">Tracking Number (if called):</label>
+                                <input type="text" id="shipTrackingInput_${item.rowIndex}" placeholder="e.g., FedEx or UPS tracking number" style="width: 100%; padding: 10px; border: 1px solid #ffc107; border-radius: 6px; font-size: 14px;">
+                            </div>
+                            <button class="btn-primary" onclick="updateLooseItemStatus('${item.rowIndex}', 'Ship out')">✓ Mark as Ship out</button>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = '<div class="error">❌ No matching items found</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsContainer.innerHTML = '<div class="error">❌ Error searching: ' + error.message + '</div>';
+            });
+        }
+
+        function updateNonQuinceReturnStatus(rowIndex, newStatus) {
+            // Get tracking number if user entered one
+            const trackingInput = document.getElementById('shipTrackingInput_' + rowIndex);
+            const trackingNumber = trackingInput ? trackingInput.value.trim() : '';
+
+            const data = {
+                action: 'updateNonQuinceReturnStatus',
+                rowIndex: parseInt(rowIndex),
+                newStatus: newStatus,
+                trackingNumber: trackingNumber
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    showSuccessToast('✓ Item marked as ' + newStatus + '!');
+                    setTimeout(() => {
+                        document.getElementById('shipReturnResultsContainer').innerHTML = '';
+                        document.getElementById('shipSearchRmaOrCustomer').value = '';
+                    }, 500);
+                } else {
+                    alert('❌ Error: ' + (result.message || 'Failed to update'));
+                }
+            })
+            .catch(error => alert('❌ Error: ' + error.message));
+        }
+
+        function updateLooseItemStatus(rowIndex, newStatus) {
+            // Get tracking number if user entered one
+            const trackingInput = document.getElementById('shipTrackingInput_' + rowIndex);
+            const trackingNumber = trackingInput ? trackingInput.value.trim() : '';
+
+            const data = {
+                action: 'updateLooseItemStatus',
+                rowIndex: parseInt(rowIndex),
+                newStatus: newStatus,
+                trackingNumber: trackingNumber
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    showSuccessToast('✓ Item marked as ' + newStatus + '!');
+                    setTimeout(() => {
+                        document.getElementById('shipLooseResultsContainer').innerHTML = '';
+                        document.getElementById('shipSearchBrand').value = '';
+                    }, 500);
+                } else {
+                    alert('❌ Error: ' + (result.message || 'Failed to update'));
+                }
+            })
+            .catch(error => alert('❌ Error: ' + error.message));
+        }
+
+        function autoDonateOldItems() {
+            const resultsContainer = document.getElementById('autoDonateResultsContainer');
+            resultsContainer.innerHTML = '<div class="loading"><span class="loading-spinner"></span>Processing...</div>';
+
+            const data = {
+                action: 'autoDonateOldItems'
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Auto-donate results:', data);
+
+                if (data.status === 'success') {
+                    resultsContainer.innerHTML = `
+                        <div style="background: #e8f5e9; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; color: #2e7d32;">
+                            ✓ Auto-donate completed!<br/>
+                            <strong>Items processed: ${data.itemsProcessed}</strong>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = '<div class="error">❌ Error: ' + (data.message || 'Failed to process') + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsContainer.innerHTML = '<div class="error">❌ Error: ' + error.message + '</div>';
+            });
+        }
+    </script>
+</body>
+</html>
