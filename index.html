@@ -2413,17 +2413,21 @@
 
             console.log('Submitting Loose Item:', submissionData);
 
-            // Show confirmation FIRST
-            alert('✓ Loose Item Recorded Successfully!\n\nCheck spreadsheet for assigned Bin #');
-
-            // Clear form SECOND
+            // Clear form
             clearLooseItem();
 
-            // Reset flag THIRD
-            isLooseItemSubmitting = false;
-
-            // Send data in background (fire and forget - don't wait for response)
-            sendDataToAppsScript(submissionData);
+            // Send data and show Bin# when response comes back
+            sendDataToAppsScript(submissionData)
+                .then(response => {
+                    const binNumber = response && response.binNumber ? response.binNumber : 'Check spreadsheet';
+                    alert('✓ Loose Item Recorded Successfully!\n\nAssigned Bin #: ' + binNumber);
+                })
+                .catch(error => {
+                    alert('✓ Loose Item Recorded Successfully!\n\nCheck spreadsheet for assigned Bin #');
+                })
+                .finally(() => {
+                    isLooseItemSubmitting = false;
+                });
         }
 
         function clearLooseItem() {
