@@ -998,7 +998,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymQE-VGnUsJgrNEJF7UgxQL88P7yQD-hJwXRzsG3RFYoeaqNwbEQfDvsDlgdvWbLFu/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDvpmmCQz017NY02uufMYOO-AouBzV23HmByt0cycsrsW3Lu9kb0bi3NuXJ_aeurP8/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2416,18 +2416,39 @@
             // Clear form
             clearLooseItem();
 
-            // Send data and show Bin# when response comes back
-            sendDataToAppsScript(submissionData)
-                .then(response => {
-                    const binNumber = response && response.binNumber ? response.binNumber : 'Check spreadsheet';
-                    alert('✓ Loose Item Recorded Successfully!\n\nAssigned Bin #: ' + binNumber);
+            // Show initial success
+            alert('✓ Loose Item Recorded Successfully!\n\nFetching assigned Bin #...');
+
+            // Send data in background
+            sendDataToAppsScript(submissionData);
+
+            // After 2 seconds, fetch and show the latest Bin#
+            setTimeout(() => {
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        data: JSON.stringify({
+                            action: 'getLatestBinNumber'
+                        })
+                    })
+                })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        const result = JSON.parse(text);
+                        const binNumber = result.binNumber || 'Check spreadsheet';
+                        alert('✓ Assigned Bin #: ' + binNumber);
+                    } catch (e) {
+                        console.log('Could not parse bin response');
+                    }
                 })
                 .catch(error => {
-                    alert('✓ Loose Item Recorded Successfully!\n\nCheck spreadsheet for assigned Bin #');
+                    console.log('Could not fetch bin number');
                 })
                 .finally(() => {
                     isLooseItemSubmitting = false;
                 });
+            }, 2000);
         }
 
         function clearLooseItem() {
