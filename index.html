@@ -762,13 +762,6 @@
                     </div>
                 </div>
 
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label>Location (Cart/Bin) *</label>
-                        <input type="text" id="looseLocation" placeholder="e.g., Bin C3, Shelf 2">
-                    </div>
-                </div>
-
                 <div class="button-row">
                     <button class="btn-primary" onclick="submitLooseItem()">✓ Record Loose Item</button>
                     <button class="btn-secondary" onclick="clearLooseItem()">Clear</button>
@@ -1005,7 +998,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxtHTJtsUCh7MmORwzG0IRhWbctodPdudNFSHLk4uI7cfWlI9ChPKmszWocHc0Baa0/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTCVhXwVpDAdD7LDx6vmaK3zsNJgPLYNcSunHOrh5SzE43C4Ap62Y0eCw2-jF3CgtM/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2368,9 +2361,8 @@
         function submitLooseItem() {
             const brand = document.getElementById('looseProductBrand').value.trim();
             const description = document.getElementById('looseProductDescription').value.trim();
-            const location = document.getElementById('looseLocation').value.trim();
 
-            if (!brand || !description || !location) {
+            if (!brand || !description) {
                 alert('⚠️ Please fill in all fields');
                 return;
             }
@@ -2380,8 +2372,7 @@
                 type: 'Loose Item',
                 userName: currentUserName,
                 brand: brand,
-                description: description,
-                location: location
+                description: description
             };
 
             console.log('Submitting Loose Item:', submissionData);
@@ -2391,7 +2382,10 @@
                 .then(response => {
                     console.log('Response:', response);
                     // Show success message with auto-generated Bin#
-                    showSuccessToast('✓ Loose item recorded!');
+                    const message = response.binNumber
+                        ? `✓ Loose item recorded! Assigned Bin: ${response.binNumber}`
+                        : '✓ Loose item recorded!';
+                    showSuccessToast(message);
                     clearLooseItem();
                 })
                 .catch(error => {
@@ -2403,7 +2397,6 @@
         function clearLooseItem() {
             document.getElementById('looseProductBrand').value = '';
             document.getElementById('looseProductDescription').value = '';
-            document.getElementById('looseLocation').value = '';
             document.getElementById('looseProductBrand').focus();
         }
 
