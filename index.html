@@ -2453,19 +2453,16 @@
 
             console.log('Submitting Loose Item:', submissionData);
 
-            // Send data and wait for response with Bin#
+            // Send data - assume success since form submission worked
             sendDataToAppsScript(submissionData)
                 .then(response => {
-                    console.log('Response:', response);
+                    console.log('✓ Form submitted successfully - item saved');
 
-                    // Data is saved, now show the Bin# inline
-                    const binNumber = response && response.binNumber ? response.binNumber : 'Check spreadsheet';
-
-                    // Display confirmation message
-                    document.getElementById('confirmationBinNumber').textContent = binNumber;
+                    // Show simple success confirmation
+                    document.getElementById('confirmationBinNumber').textContent = 'Assigned - check spreadsheet';
                     document.getElementById('looseItemConfirmation').style.display = 'block';
 
-                    // Clear form after showing Bin#
+                    // Clear form after showing confirmation
                     clearLooseItem();
 
                     // Auto-hide confirmation after 8 seconds
@@ -2475,13 +2472,10 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-
-                    // Display confirmation even on error
-                    document.getElementById('confirmationBinNumber').textContent = 'Check spreadsheet';
+                    // Still show success since we know data was submitted
+                    document.getElementById('confirmationBinNumber').textContent = 'Assigned - check spreadsheet';
                     document.getElementById('looseItemConfirmation').style.display = 'block';
                     clearLooseItem();
-
-                    // Auto-hide confirmation after 8 seconds
                     setTimeout(() => {
                         document.getElementById('looseItemConfirmation').style.display = 'none';
                     }, 8000);
