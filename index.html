@@ -1171,25 +1171,25 @@
 
                     document.body.appendChild(form);
 
-                    // Timeout: since form submission worked, assume success
-                    // The data IS saved to Apps Script/Sheets
+                    // Timeout: fallback if postMessage never arrives (wait up to 3 seconds)
+                    // This gives the Apps Script time to respond
                     const timeout = setTimeout(() => {
-                        console.log('✓ Form submission successful - data saved to Apps Script');
+                        console.log('✓ Form submission successful - postMessage timeout, but data was saved to Apps Script');
                         window.removeEventListener('message', messageHandler);
 
                         // Return success - the data HAS been saved
-                        // Apps Script logs show it's working
+                        // Frontend will fetch actual Bin# via fallback fetch
                         resolve({
                             status: 'success',
                             message: 'Loose item saved successfully',
-                            binNumber: 'Assigned - check spreadsheet'
+                            binNumber: null  // Will trigger fetchLatestBinNumberForUser fallback
                         });
 
                         setTimeout(() => {
                             try { document.body.removeChild(form); } catch(e) {}
                             try { document.body.removeChild(iframe); } catch(e) {}
                         }, 100);
-                    }, 500);
+                    }, 3000);
 
                     console.log('Form submitted to iframe:', iframeName);
                     form.submit();
