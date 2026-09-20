@@ -1011,7 +1011,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxcApYnVZh_CQbkA6RZ1L2WlD9leRuiO5OOFyM1zsUExLFY1quHUagv3UCr6DQQMh_/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3LHKJnvsoprlf1hg-Gt1iiMEGO0A0mnRB3jJS96sdp0CJsyo51_7ulgZT11nIHjjP/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2433,7 +2433,12 @@
             // Use fetch to send data and stay on page
             sendDataToAppsScript(submissionData)
                 .then(response => {
-                    showSuccessToast('✓ Non-Quince return recorded!');
+                    // Show generated NQ ID if available
+                    if (response && response.nqId) {
+                        alert(`✓ RMA Return saved!\n\nID: ${response.nqId}`);
+                    } else {
+                        showSuccessToast('✓ Non-Quince return recorded!');
+                    }
                     clearNonQuinceReturn();
                 })
                 .catch(error => {
