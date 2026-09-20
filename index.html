@@ -1612,30 +1612,49 @@
         }
 
         function saveManualReturnLocally(trackingNumber, customerName, items) {
-            // Save to browser localStorage
-            let allReturns = JSON.parse(localStorage.getItem('manualReturns') || '[]');
-            allReturns.push({
-                timestamp: new Date().toISOString(),
+            // Send directly to Google Sheets via Apps Script
+            const userName = localStorage.getItem('userName') || 'Unknown User';
+
+            const payload = {
+                action: 'saveManualReturn',
+                userName: userName,
                 trackingNumber: trackingNumber,
                 customerName: customerName,
                 items: items
-            });
-            localStorage.setItem('manualReturns', JSON.stringify(allReturns));
+            };
 
-            // Show options
-            const csvData = generateCSV(trackingNumber, customerName, items);
-            const message = `✓ Data saved locally!\n\nOptions:\n1. Download as CSV for Google Sheets\n2. Copy data manually\n\nWould you like to download CSV?`;
+            // Create hidden iframe for form submission
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.name = 'submitFrame';
+            document.body.appendChild(iframe);
 
-            if (confirm(message)) {
-                downloadCSV(csvData, `manual-return-${trackingNumber}-${new Date().getTime()}.csv`);
-                alert('✓ CSV downloaded! You can now import it into Google Sheets.');
-                closeReviewModal();
-                closeManualEntryModal();
-            } else {
-                alert('Data saved locally. You can download later from your browser storage.');
-                closeReviewModal();
-                closeManualEntryModal();
-            }
+            // Create form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = APPS_SCRIPT_URL;
+            form.target = 'submitFrame';
+
+            // Add data as hidden input
+            const dataInput = document.createElement('input');
+            dataInput.type = 'hidden';
+            dataInput.name = 'data';
+            dataInput.value = JSON.stringify(payload);
+            form.appendChild(dataInput);
+
+            document.body.appendChild(form);
+            form.submit();
+
+            // Show success message
+            alert('✓ Manual return saved to Google Sheets!');
+            closeReviewModal();
+            closeManualEntryModal();
+
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(form);
+                document.body.removeChild(iframe);
+            }, 1000);
         }
 
         function generateCSV(trackingNumber, customerName, items) {
