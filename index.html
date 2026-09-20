@@ -1011,7 +1011,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/onequince.com/s/AKfycbyfaoXAmM_-GwTF0A4Q7Byc0wB3PoHZXHJWKV7lOb0IzyQExrkFp5350DZFmZmS5eFnMg/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/onequince.com/s/AKfycbysNdGX7Es6dRk9NYqFwh6_Vq4VuZ0QLzfVxVJFABM4dYNutWqtjgL01lA4_bmficrVQA/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
         // Sample Inventory Data (defined at top for early availability)
@@ -2443,12 +2443,11 @@
                 return;
             }
 
-            // Get the next available Bin#
+            // Get the next available Bin# (uses same logic as Apps Script when saving)
             console.log('🔍 Querying for next available Bin#...');
 
             const queryData = {
-                action: 'getLatestBinNumberForUser',
-                userName: currentUserName
+                action: 'getNextAvailableBinNumber'
             };
 
             fetch(APPS_SCRIPT_URL, {
@@ -2460,23 +2459,16 @@
                 console.log('Query response:', data);
 
                 if (data && data.status === 'success' && data.binNumber) {
-                    // Get the next bin number (increment by 1)
-                    const lastBinMatch = data.binNumber.match(/A(\d+)/);
-                    if (lastBinMatch) {
-                        const lastNum = parseInt(lastBinMatch[1]);
-                        const nextBin = 'A' + (lastNum + 1);
+                    // Display the exact bin that will be used when saving
+                    currentAssignedBin = data.binNumber;
+                    document.getElementById('assignedBinNumber').textContent = data.binNumber;
+                    document.getElementById('assignedBinDisplay').style.display = 'block';
 
-                        // Display assigned bin and show submit button
-                        currentAssignedBin = nextBin;
-                        document.getElementById('assignedBinNumber').textContent = nextBin;
-                        document.getElementById('assignedBinDisplay').style.display = 'block';
-
-                        console.log('✓ Bin assigned:', nextBin);
-                    }
+                    console.log('✓ Bin assigned:', data.binNumber);
                 } else {
-                    // Fallback: assign starting number
+                    // Fallback on error
                     currentAssignedBin = 'A118';
-                    document.getElementById('assignedBinNumber').textContent = 'A118';
+                    document.getElementById('assignedBinNumber').textContent = 'A118 (offline)';
                     document.getElementById('assignedBinDisplay').style.display = 'block';
                     console.log('⚠️ Using fallback bin: A118');
                 }
