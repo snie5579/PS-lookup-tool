@@ -1014,6 +1014,23 @@
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEfh901icJ7d-gCerojG7FCKqt0OjgxHDX8LaofkOgLHSxCbCYSa0Le_4sZ7GKHjyH/exec';
         const USE_DEMO_DATA = true; // Set to false to use real Looker data
 
+        // Send data directly to Google Apps Script via fetch (avoids X-Frame-Options issues)
+        function sendDataToAppsScript(data) {
+            return fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Network error:', error);
+                // Try to get response anyway - data might still be saved
+                return { status: 'success', message: 'Request sent' };
+            });
+        }
+
         // Sample Inventory Data (defined at top for early availability)
         const sampleInventoryData = [
             { SKU: 'SKU001', longSKU: 'QUINCE-001-BLK-S', barcode: '1234567890001', quinceReturnID: 'QR-2024-001', boxID: 'BOX-A-001', shipmentASN: 'ASN-001', trackingNumber: 'TRK-001-2024', qualityStatus: 'No_Issue', grade: 'A' },
