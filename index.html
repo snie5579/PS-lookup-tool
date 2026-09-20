@@ -763,14 +763,21 @@
                 </div>
 
                 <div class="button-row">
-                    <button class="btn-primary" onclick="submitLooseItem()">✓ Record Loose Item</button>
+                    <button class="btn-primary" onclick="assignBinLocation()">📍 Assign Bin Location</button>
                     <button class="btn-secondary" onclick="clearLooseItem()">Clear</button>
                 </div>
 
-                <!-- Inline Confirmation Message -->
+                <!-- Assigned Bin Display -->
+                <div id="assignedBinDisplay" style="display: none; margin-top: 20px; padding: 16px; background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; color: #0c5460;">
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">✓ Bin Location Assigned</div>
+                    <div style="font-size: 14px; margin-bottom: 16px;">Assigned Bin #: <span id="assignedBinNumber" style="font-weight: 600; font-size: 18px; color: #2196f3;"></span></div>
+                    <button class="btn-primary" onclick="submitLooseItem()" style="width: 100%; background: #4caf50;">✓ Record Loose Item with This Bin</button>
+                </div>
+
+                <!-- Inline Success Message -->
                 <div id="looseItemConfirmation" style="display: none; margin-top: 20px; padding: 16px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724;">
                     <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">✓ Loose Item Recorded Successfully!</div>
-                    <div style="font-size: 14px;">Assigned Bin #: <span id="confirmationBinNumber" style="font-weight: 600; font-size: 16px; color: #0c5460;"></span></div>
+                    <div style="font-size: 14px;">Recorded in Bin #: <span id="confirmationBinNumber" style="font-weight: 600; font-size: 16px; color: #0c5460;"></span></div>
                 </div>
             </div>
 
@@ -2425,10 +2432,72 @@
 
         // Loose Item Functions
         let isLooseItemSubmitting = false;
+        let currentAssignedBin = null; // Store assigned bin temporarily
+
+        function assignBinLocation() {
+            const brand = document.getElementById('looseProductBrand').value.trim();
+            const description = document.getElementById('looseProductDescription').value.trim();
+
+            if (!brand || !description) {
+                alert('⚠️ Please enter both brand and description before assigning a bin');
+                return;
+            }
+
+            // Get the next available Bin#
+            console.log('🔍 Querying for next available Bin#...');
+
+            const queryData = {
+                action: 'getLatestBinNumberForUser',
+                userName: currentUserName
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(queryData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Query response:', data);
+
+                if (data && data.status === 'success' && data.binNumber) {
+                    // Get the next bin number (increment by 1)
+                    const lastBinMatch = data.binNumber.match(/A(\d+)/);
+                    if (lastBinMatch) {
+                        const lastNum = parseInt(lastBinMatch[1]);
+                        const nextBin = 'A' + (lastNum + 1);
+
+                        // Display assigned bin and show submit button
+                        currentAssignedBin = nextBin;
+                        document.getElementById('assignedBinNumber').textContent = nextBin;
+                        document.getElementById('assignedBinDisplay').style.display = 'block';
+
+                        console.log('✓ Bin assigned:', nextBin);
+                    }
+                } else {
+                    // Fallback: assign starting number
+                    currentAssignedBin = 'A118';
+                    document.getElementById('assignedBinNumber').textContent = 'A118';
+                    document.getElementById('assignedBinDisplay').style.display = 'block';
+                    console.log('⚠️ Using fallback bin: A118');
+                }
+            })
+            .catch(error => {
+                console.error('Error assigning bin:', error);
+                // Fallback on error
+                currentAssignedBin = 'A118';
+                document.getElementById('assignedBinNumber').textContent = 'A118 (offline)';
+                document.getElementById('assignedBinDisplay').style.display = 'block';
+            });
+        }
 
         function submitLooseItem() {
             // Prevent duplicate submissions
             if (isLooseItemSubmitting) return;
+
+            if (!currentAssignedBin) {
+                alert('⚠️ Please assign a bin location first');
+                return;
+            }
 
             const brand = document.getElementById('looseProductBrand').value.trim();
             const description = document.getElementById('looseProductDescription').value.trim();
@@ -2440,8 +2509,9 @@
 
             isLooseItemSubmitting = true;
 
-            // Hide any previous confirmation message
+            // Hide any previous messages
             document.getElementById('looseItemConfirmation').style.display = 'none';
+            document.getElementById('assignedBinDisplay').style.display = 'none';
 
             const submissionData = {
                 action: 'saveNonQuinceProduct',
@@ -2451,46 +2521,22 @@
                 description: description
             };
 
-            console.log('Submitting Loose Item:', submissionData);
+            console.log('Submitting Loose Item with Bin#:', currentAssignedBin);
+            console.log('Data:', submissionData);
 
-            // Send data and fetch the actual Bin# that was assigned
+            // Submit to Apps Script
             sendDataToAppsScript(submissionData)
                 .then(response => {
-                    console.log('Form submission response:', response);
-
-                    // Try to get Bin# from direct response first
-                    if (response && response.binNumber && response.binNumber !== 'Check spreadsheet') {
-                        console.log('✓ Got Bin# from direct response:', response.binNumber);
-                        displayBinConfirmation(response.binNumber);
-                    } else {
-                        // Fallback: Fetch the latest Bin# for this user from the spreadsheet
-                        console.log('Fetching latest Bin# for user:', currentUserName);
-                        fetchLatestBinNumberForUser(currentUserName, 5000) // Wait up to 5 seconds
-                            .then(binNumber => {
-                                displayBinConfirmation(binNumber || 'Check spreadsheet');
-                            })
-                            .catch(err => {
-                                console.error('Error fetching Bin#:', err);
-                                displayBinConfirmation('Check spreadsheet');
-                            });
-                    }
+                    console.log('✓ Loose item recorded successfully in Bin #', currentAssignedBin);
+                    displayBinConfirmation(currentAssignedBin);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-
-                    // Fallback on error: Try to fetch the latest Bin#
-                    console.log('Form submission failed, trying fallback fetch...');
-                    fetchLatestBinNumberForUser(currentUserName, 5000)
-                        .then(binNumber => {
-                            displayBinConfirmation(binNumber || 'Check spreadsheet');
-                        })
-                        .catch(err => {
-                            console.error('Fallback fetch error:', err);
-                            displayBinConfirmation('Check spreadsheet');
-                        });
+                    displayBinConfirmation(currentAssignedBin); // Still show the bin even on error
                 })
                 .finally(() => {
                     isLooseItemSubmitting = false;
+                    currentAssignedBin = null; // Reset for next item
                 });
         }
 
